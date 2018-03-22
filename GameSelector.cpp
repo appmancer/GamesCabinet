@@ -109,6 +109,8 @@ void GameSelector::startName()
   switch(mDisplayGame)
   {
     case BATTLESHIPS_INDEX:
+      mCabinet->p1SFX.setTextColor(PixelEffects::Color(255, 0, 0));
+      mCabinet->p2SFX.setTextColor(PixelEffects::Color(255, 0, 0));
       mCabinet->p1SFX.scrollOnce(BATTLESHIPS);
       mCabinet->p2SFX.scrollOnce(BATTLESHIPS);      
       mCabinet->p1Display.setCursor(2, 1);
@@ -118,6 +120,8 @@ void GameSelector::startName()
       
     break;  
     case CONNECT4_INDEX:
+      mCabinet->p1SFX.setTextColor(PixelEffects::Color(255, 0, 0));
+      mCabinet->p2SFX.setTextColor(PixelEffects::Color(255, 0, 0));
       mCabinet->p1SFX.scrollOnce(CONNECT4);
       mCabinet->p2SFX.scrollOnce(CONNECT4);
       mCabinet->p1Display.setCursor(3, 1);
@@ -126,6 +130,8 @@ void GameSelector::startName()
       mCabinet->p2Display.print(CONNECT4);
     break;  
     case ONX_INDEX:
+      mCabinet->p1SFX.setTextColor(PixelEffects::Color(255, 0, 0));
+      mCabinet->p2SFX.setTextColor(PixelEffects::Color(255, 0, 0));
       mCabinet->p1SFX.scrollOnce(ONX);
       mCabinet->p2SFX.scrollOnce(ONX);
       mCabinet->p1Display.setCursor(4, 1);
@@ -134,6 +140,8 @@ void GameSelector::startName()
       mCabinet->p2Display.print("O and X");
     break;  
     case REVERSI_INDEX:
+      mCabinet->p1SFX.setTextColor(PixelEffects::Color(255, 0, 0));
+      mCabinet->p2SFX.setTextColor(PixelEffects::Color(255, 0, 0));
       mCabinet->p1SFX.scrollOnce(REVERSI);
       mCabinet->p2SFX.scrollOnce(REVERSI);
       mCabinet->p1Display.setCursor(4, 1);
