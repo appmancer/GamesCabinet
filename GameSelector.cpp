@@ -140,8 +140,8 @@ void GameSelector::startName()
       mCabinet->p2Display.print("O and X");
     break;  
     case REVERSI_INDEX:
-      mCabinet->p1SFX.setTextColor(PixelEffects::Color(255, 0, 0));
-      mCabinet->p2SFX.setTextColor(PixelEffects::Color(255, 0, 0));
+      mCabinet->p1SFX.setTextColor(PixelEffects::Color(0, 0, 255));
+      mCabinet->p2SFX.setTextColor(PixelEffects::Color(0, 0, 255));
       mCabinet->p1SFX.scrollOnce(REVERSI);
       mCabinet->p2SFX.scrollOnce(REVERSI);
       mCabinet->p1Display.setCursor(4, 1);
