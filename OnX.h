@@ -96,5 +96,6 @@ class OnX : public GameBase
     ~OnX();
     
     void gameloop();
+    void startDemo();
 };
 #endif

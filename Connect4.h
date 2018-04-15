@@ -56,6 +56,7 @@ class Connect4 : public GameBase
         RED             /* player 2 */
     };
 
+    void startDemo();
     void showPregame();
     void updatePregame();
     void startMove();

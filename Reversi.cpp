@@ -114,6 +114,19 @@ void Reversi::gameloop()
     }
 }
 
+void Reversi::startDemo()
+{
+  mDemoMode = true;
+  player1 = new ReversiComputerPlayer();
+  player2 = new ReversiComputerPlayer();
+
+  drawBoard();
+  //Start with player1
+  currentPlayer = player1;
+  readyTime = millis() + 1000;
+  currentPhase = REVERSI_CHANGE_PLAYER;
+}
+
 //Setup the pregame show
 void Reversi::showPregame()
 {
@@ -205,8 +218,7 @@ void Reversi::updatePregame()
 
 void Reversi::drawBoard()
 {
-  debugBoard();
-  
+ 
   for(uint8_t i = 0; i < BOARDSIZE; i++)
   {
     switch(board[i])
@@ -225,7 +237,7 @@ void Reversi::drawBoard()
         break;
     }  
   }  
-
+ 
   mCabinet->p1SFX.show();
   mCabinet->p2SFX.show();  
 }
@@ -752,6 +764,11 @@ void Reversi::updateWinner()
 
   if(readyTime > millis())
     return;
+
+  if(mDemoMode)
+  {    
+    asm volatile ("  jmp 0");
+  }
 
   flash = !flash;
   for(int i=0; i<BOARDSIZE; i++)

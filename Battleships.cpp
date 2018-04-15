@@ -90,11 +90,33 @@ void Battleships::gameloop()
         updateDestroyedShip();
         break;
       case BATTLESHIPS_NONE:
-        Serial.println("No status flag is set, starting pregame");
+        //Serial.println("No status flag is set, starting pregame");
         showPregame();
         break;
     }
 };
+
+void Battleships::startDemo()
+{
+  mDemoMode = true;
+  player1 = new BattleshipsComputerPlayer();
+  player2 = new BattleshipsComputerPlayer();
+
+  //Set the screens to all sea green
+  mCabinet->p1SFX.fillScreen(NAVY);
+  mCabinet->p1SFX.show();
+  mCabinet->p2SFX.fillScreen(NAVY);
+  mCabinet->p2SFX.show();
+
+  //Draw the initial ship positions
+  drawCursor(player1->getState(), &(mCabinet->p1SFX));
+  drawCursor(player2->getState(), &(mCabinet->p2SFX));
+
+  printMessage(&(mCabinet->p1Display), F("Choose where to"), F("place your ships"), 0, 0);
+  printMessage(&(mCabinet->p2Display), F("Choose where to"), F("place your ships"), 0, 0);
+  
+  currentPhase = BATTLESHIPS_SETUP;
+}
 
 /***#
  * Allow a special effects routine to complete
@@ -103,7 +125,7 @@ void Battleships::updateEffects()
 {
   bool p1Ready = mCabinet->p1SFX.updateSFX();
   bool p2Ready = mCabinet->p2SFX.updateSFX();
-  Serial.print("p1Ready"); if(p1Ready)Serial.print(": true "); else Serial.print(": false ");Serial.print(" p2Ready");if(p2Ready)Serial.println(": true "); else Serial.println(": false ");
+  //Serial.print("p1Ready"); if(p1Ready)Serial.print(": true "); else Serial.print(": false ");Serial.print(" p2Ready");if(p2Ready)Serial.println(": true "); else Serial.println(": false ");
   if(p1Ready && p2Ready)
   {
     //Effects have finished
@@ -154,23 +176,23 @@ void Battleships::updatePregame()
   //Test to see if any of the player buttons have been pressed.
   uint8_t playerButtons = mCabinet->p1Control.buttonState();
 
-  //Serial.print("button state: ");Serial.println(playerButtons);
+  //Serial.print("p1 button state: ");Serial.println(playerButtons);
   if(playerButtons > 0)
   {
-    Serial.println("Testing player 1");
+    //Serial.println("Testing player 1");
     //Serial.print("Player1: "); Serial.println((int)player1, HEX);
      //Player 1 has pressed a button and wants to play
-     if(player1 != NULL && player1->getState()->buttonState == 0)
+     if(player1 != NULL && player2 == NULL && player1->getState()->buttonState == 0)
      {
         //Player 1 is already in the game, so create a computer player2
 
         //Number of players = 0
-        Serial.println("Player 1 is having a single player game.  Activate the robot!");
+        //Serial.println("Player 1 is having a single player game.  Activate the robot!");
         player2 = new BattleshipsComputerPlayer();
      }
-     else
+     else if(player1 == NULL)
      {
-        Serial.println("Creating human player");
+        //Serial.println("Creating human player");
         player1 = new BattleshipsHumanPlayer(&(mCabinet->p1Control));
         printMessage(&(mCabinet->p1Display), F("Waiting for"), F("other player"), 2, 2);
      }
@@ -185,20 +207,22 @@ void Battleships::updatePregame()
 
   //Serial.println("Getting p2 buttons");
   playerButtons = mCabinet->p2Control.buttonState();
+  //Serial.print("p2 button state: ");Serial.println(playerButtons);
   if(playerButtons > 0)
   {
-      Serial.println("Testing player 2");
+      //Serial.println("Testing player 2");
+      //Serial.print("Player2: "); Serial.println((int)player2, HEX);
      //Player 2 has pressed a button and wants to play
-     if(player2 != NULL && player2->getState()->buttonState == 0)
+     if(player2 != NULL && player1 == NULL && player2->getState()->buttonState == 0)
      {
         //Player 2 is already in the game, so create a computer player1
-        Serial.println("Player 2 is having a single player game.  Activate the robot!");
+        //Serial.println("Player 2 is having a single player game.  Activate the robot!");
         player1 = new BattleshipsComputerPlayer();
         currentPlayer = PLAYER2;
      }
-     else
+     else if(player2 == NULL)
      {
-        Serial.println("Creating human player for player 2");
+        //Serial.println("Creating human player for player 2");
         player2 = new BattleshipsHumanPlayer(&(mCabinet->p2Control));
         printMessage(&(mCabinet->p2Display), F("Waiting for"), F("other player"), 2, 2);
  
@@ -207,14 +231,14 @@ void Battleships::updatePregame()
   //Keep a record of button state
   if(player2 != NULL)
   {
-    Serial.println("Setting p2 buttons");
+    //Serial.println("Setting p2 buttons");
     player2->getState()->buttonState = playerButtons;  
   }
 
   //When we've got two players, and all the buttons are released we can start
   if(player1 != NULL && player2 != NULL && mCabinet->p1Control.buttonState() == 0 && mCabinet->p2Control.buttonState() == 0)
   {
-    Serial.println("Player has pressed a button, starting setup");
+    //Serial.println("Player has pressed a button, starting setup");
     //A player has pressed something  START SETUP
 
     //Set the screens to all sea green
@@ -240,7 +264,7 @@ void Battleships::updatePregame()
     Serial.print("Ship tyoe : ");
     Serial.println(player1State.selectedShip & 0x0F);*/
     
-    Serial.println("Setup reset complete, waiting for player to move");
+    //Serial.println("Setup reset complete, waiting for player to move");
   }
 }
 
@@ -252,8 +276,8 @@ void Battleships::updateSetup()
   {
     //We're already to go!
       currentPhase = BATTLESHIPS_CHANGE_PLAYER;
-      Serial.println("Players are ready to begin!  ATTTACCKKK");
-      
+      //Serial.println("Players are ready to begin!  ATTTACCKKK");
+      //debugBoard(player1->getBoard());
       readyTime = 0;
       return;
   }
@@ -533,25 +557,25 @@ void Battleships::moveForAttacker()
 
 void Battleships::fire()
 {
-  Serial.println("FIRE!");
+  //Serial.println("FIRE!");
 
   uint8_t cursorValid = (attackingPlayer->getState()->positionState & 0x40) == 0x40 ? VALIDPOS : INVALIDPOS;
   if(cursorValid == INVALIDPOS)
   {
     //Not a valid position to hit, return and wait for a better attempt
-    Serial.println("Attempting to fire on invalid position");
+    //Serial.println("Attempting to fire on invalid position");
     return;  
   }
 
   uint8_t pos = attackingPlayer->getState()->positionState & 0x3F;
 
   uint8_t attackedPos = *(defendingPlayer->getBoard() + pos);
-  Serial.print("Attacked position 0x");Serial.println(attackedPos, HEX);
+  //Serial.print("Attacked position 0x");Serial.println(attackedPos, HEX);
   if((attackedPos & WATER) != WATER)
   {
     //We've not hit water!
-    Serial.println("Hit");
-    debugBoard(defendingPlayer->getBoard());
+    //Serial.println("Hit");
+    //debugBoard(defendingPlayer->getBoard());
     //Read the current value of the hit square
     uint8_t hitShip = *(defendingPlayer->getBoard() + pos);
 
@@ -584,9 +608,7 @@ void Battleships::fire()
       //This ship has been completely destroyed  
       uint8_t attackedShipIndex = hitShip / 2 - 2;
       pos = defendingPlayer->getState()->shipPositions[attackedShipIndex];
-      Serial.print("Ship number ");
-      Serial.print(attackedShipIndex);
-      Serial.println(" has been destroyed");
+      //Serial.print("Ship number ");Serial.print(attackedShipIndex);Serial.println(" has been destroyed");
       
       printMessage(attackingLCD, F("You have sunk"), F("their ship"), 2, 3);
       printMessage(defendingLCD, F("Your ship"), F("has been sunk"), 3, 2);
@@ -620,7 +642,7 @@ void Battleships::fire()
   }
   else //shot missed
   {
-    Serial.println("Missed!");
+    //Serial.println("Missed!");
     //Update the attacker's tracking board
     *(attackingPlayer->getTrackingBoard() + pos) = MISSED;
     attackingMatrix->setPixelColor(pos, COLOURS[MISSED]);
@@ -685,7 +707,7 @@ void Battleships::updateDestroyedShip()
     
     if(defendingPlayer->isDestroyed()) 
     {
-      Serial.println("Defender is destroyed, end the game");  
+      //Serial.println("Defender is destroyed, end the game");  
       printMessage(attackingLCD, F("You are"), F("the winner!"), 5, 2);
       printMessage(defendingLCD, F("All of your"), F("ships have sunk!"), 2, 0);
       
@@ -693,6 +715,7 @@ void Battleships::updateDestroyedShip()
       defendingMatrix->larsenWipe(DARKGREEN);  
       
       currentPhase = BATTLESHIPS_WINNER;
+      readyTime = millis() + 5000;
       //Play sound
       mCabinet->audioController.playFileIndex(SFX_WIN);
       return;
@@ -719,15 +742,21 @@ void Battleships::updateWinner()
   uint8_t player1Buttons = mCabinet->p1Control.buttonState();
   uint8_t player2Buttons = mCabinet->p2Control.buttonState();
 
+  if(mDemoMode && readyTime > millis())
+  {
+    //Hacksville reset command
+    asm volatile ("  jmp 0");
+  }
+
   if(player1Buttons > 0 || player2Buttons > 0)
   {
-    Serial.println("Starting a new game");
+    //Serial.println("Starting a new game");
     
     printMessage(attackingLCD, F("Press any button"), F("to start"), 0, 4);
     printMessage(defendingLCD, F("Press any button"), F("to start"), 0, 4);
     
     reset();  
-  } 
+  }
 }
 
 

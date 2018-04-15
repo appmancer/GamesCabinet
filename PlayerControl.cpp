@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include "PlayerControl.h"
 
+
+ 
 PlayerControl::
     PlayerControl(uint8_t horizontalPinA, uint8_t horizontalPinB, uint8_t verticalPinA, uint8_t verticalPinB, uint8_t horizontalFire, uint8_t verticalFire, uint8_t firePin)
      : hEncoderButton(horizontalFire), vEncoderButton(verticalFire), fireButton(firePin), hEncoder(horizontalPinA, horizontalPinB), vEncoder(verticalPinA, verticalPinB)
@@ -18,7 +20,7 @@ PlayerControl::~PlayerControl()
 uint8_t PlayerControl::buttonState()
 {
   uint8_t state = 0;
-  //The firebutton is pulled down, so when it is pressed, it is HIGH
+  //The firebutton is pulled up, so when it is pressed, it is LOW
   if(digitalRead(fireButton) == HIGH)
   {
     state+= FireButton;  

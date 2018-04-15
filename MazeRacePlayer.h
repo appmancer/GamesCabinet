@@ -12,17 +12,27 @@
 #define MAZE_MOVE_SOUTH 180
 #define MAZE_MOVE_WEST  270
 
+typedef struct MazeRacePlayerState
+{
+  //NB  This button state reflects the values returned by the PlayerControl button state method
+  uint8_t buttonState;      // bit 7     fire button
+                            // bit 6     horizontal encoder
+                            // bit 5     vertical encoder
+                            // bit 0-4   unused 
+};
 
 class MazeRacePlayer
 {
-    private:
-	uint16_t currentPos;
+    protected:
+	    uint16_t mCurrentPos;
+      MazeRacePlayerState mPlayerState;
 
     public:
       MazeRacePlayer();
       ~MazeRacePlayer();
-      virtual uint16_t getMove(String* maze) = 0;
-      void setPosition(uint16_t newPos);
+      MazeRacePlayerState* getState();
+      virtual uint16_t getMove(char* maze) = 0;
+      virtual void setPosition(uint16_t newPos);
       uint16_t getPosition();
 };
 

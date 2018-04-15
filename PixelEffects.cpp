@@ -2,6 +2,7 @@
 #include <Adafruit_NeoMatrix.h>
 #include "WS2812_Definitions.h"
 
+#define SFX_VERYSHORTDELAY   20
 #define SFX_SHORTDELAY   80
 #define SFX_MEDIUMDELAY 200
 #define SFX_LONGDELAY   500
@@ -46,12 +47,18 @@ PixelEffects::PixelEffects(uint8_t width, uint8_t height, uint8_t pin) : Adafrui
 PixelEffects::~PixelEffects()
 {}
 
-void PixelEffects::fillScreen(uint32_t color)
+void PixelEffects::fillScreen(const uint32_t color)
 {
   for(int i=0; i<64; i++)
   {
     setPixelColor(i, color);  
   }
+}
+
+void PixelEffects::setTextColor(const uint32_t color)
+{
+  uint16_t rgb = (color>>8&0xf800)|(color>>5&0x07e0)|(color>>3&0x001f);
+  Adafruit_NeoMatrix::setTextColor(rgb);
 }
 
 /**
@@ -85,13 +92,22 @@ bool PixelEffects::updateSFX()
     case PIXELEFFECT_DROP:
       return updateDrop();
       break;
+    case PIXELEFFECT_WIPE:
+      return updateWipe();
+      break;
+    case PIXELEFFECT_FADEIN:
+      return updateFadeIn();
+      break;
+    case PIXELEFFECT_FADEOUT:
+      return updateFadeOut();
+      break;
   }
 }
 
 /***
  * Start an effect where a message will scroll once across the screen
  */
-void PixelEffects::scrollOnce(char* message)
+void PixelEffects::scrollOnce(const char* message)
 {
   //Check for zero length string
   if(*message == 0) return;
@@ -197,6 +213,80 @@ void PixelEffects::drop(uint32_t final[64])
   readyTime = millis() + SFX_SHORTDELAY;
 }
 
+/** 
+ *  Starts a wipe effect to black
+ */
+void PixelEffects::wipe()
+{
+  //Set the end position to be all black
+  for(int i=0; i<64; i++)
+  {
+    endPosition[i] = BLACK;  
+  }  
+  
+  currentEffect = PIXELEFFECT_WIPE;
+  charIndex = 1;
+  
+  //Wait a minimum of 50 milliseconds
+  readyTime = millis() + SFX_SHORTDELAY;
+}
+
+/** 
+ *  Starts a wipe effect to a new matrix
+ */
+void PixelEffects::wipe(uint32_t final[64])
+{
+  //Copy the array
+  for(int i=0; i<64;i++)
+  {
+    endPosition[i] = final[i];  
+  }
+  
+  currentEffect = PIXELEFFECT_WIPE;
+  charIndex = 1;
+  
+  //Wait a minimum of 50 milliseconds
+  readyTime = millis() + SFX_SHORTDELAY;
+}
+
+/** 
+ *  Starts a fade effect to black
+ */
+void PixelEffects::fade()
+{
+  savedBrightness = getBrightness();
+  //Set the end position to be all black
+  for(int i=0; i<64; i++)
+  {
+    endPosition[i] = BLACK;  
+  }  
+  
+  currentEffect = PIXELEFFECT_FADEOUT;
+  charIndex = 1;
+  
+  //Wait a minimum of 50 milliseconds
+  readyTime = millis() + SFX_SHORTDELAY;
+}
+
+/** 
+ *  Starts a fade in effect to a new matrix
+ */
+void PixelEffects::fade(uint32_t final[64])
+{
+  savedBrightness = getBrightness();
+  //Copy the array
+  for(int i=0; i<64;i++)
+  {
+    endPosition[i] = final[i];  
+  }
+  
+  currentEffect = PIXELEFFECT_FADEIN;
+  charIndex = 1;
+  
+  //Wait a minimum of 50 milliseconds
+  readyTime = millis() + SFX_SHORTDELAY;
+}
+
 void PixelEffects::updateBoard(uint32_t final[64])
 {
   for(int i=0; i<64; i++)
@@ -290,7 +380,7 @@ bool PixelEffects::updateLarsen()
 
 bool PixelEffects::updateDissolve()
 {
-    setPixelColor(dissolveOrder[charIndex], endPosition[charIndex]);
+    setPixelColor(dissolveOrder[charIndex], endPosition[dissolveOrder[charIndex]]);
     show();
     
     if(charIndex++ == 64)
@@ -302,7 +392,7 @@ bool PixelEffects::updateDissolve()
     else
     {
       //Wait a minimum of 50 milliseconds
-      readyTime = millis() + SFX_SHORTDELAY;
+      readyTime = millis() + SFX_VERYSHORTDELAY;
       return false;  
     }
 }
@@ -349,7 +439,101 @@ bool PixelEffects::updateDrop()
   else
   {
     //Wait a minimum of 100 milliseconds
-    readyTime = millis() + SFX_MEDIUMDELAY;
+    readyTime = millis() + SFX_SHORTDELAY;
+    return false;  
+  }
+}
+
+/**
+ * Copy each column to the column on its right, adding the new column at the left
+ */
+bool PixelEffects::updateWipe()
+{
+  //Serial.println("Updating wipe");
+  uint8_t nextLED = 0;
+  uint8_t logicalPos = 7;
+  
+  //For each visible column...
+  for(uint8_t i=charIndex; i>0; i--)
+  {  
+    //Serial.print("Column ");Serial.println(i);
+    //for each row in that column...
+    for(uint8_t j=0; j<8; j++)
+    {
+      logicalPos = (8 - i) + (j * 8);
+      nextLED = (8 * j) + i - 1;       
+      //Serial,print("Setting LED "); Serial.print(nextLED); Serial.print(" to index "); Serial.println(logicalPos);
+      setPixelColor(nextLED, endPosition[logicalPos]);
+    }
+  }
+  
+  show();
+  
+  //Move down 1 row for next executions
+  charIndex++;
+
+  if(charIndex == 9)
+  {
+    //We've finished and left the matrix in the end position
+    currentEffect = PIXELEFFECT_NONE;
+    return true;  
+  }
+  else
+  {
+    //Wait a minimum of 100 milliseconds
+    readyTime = millis() + SFX_SHORTDELAY;
+    return false;  
+  }
+}
+
+bool PixelEffects::updateFadeOut()
+{
+  setBrightness(255 - (charIndex * 20));
+  show();
+  charIndex++;
+
+  if(charIndex == 9)
+  {
+    //We've finished and left the matrix in the end position
+    currentEffect = PIXELEFFECT_NONE;
+    //Actually blank the screen now    
+    setBrightness(savedBrightness);
+    for(int i=0; i< 64; i++)setPixelColor(i,0);
+    show();
+    return true;  
+  }
+  else
+  {
+    //Wait a minimum of 100 milliseconds
+    readyTime = millis() + SFX_SHORTDELAY;
+    return false;  
+  }
+}
+
+bool PixelEffects::updateFadeIn()
+{
+  uint8_t unit = savedBrightness / 10;
+  setBrightness(charIndex * unit);
+  //Redraw the colours
+  for(int i=0; i<64; i++)
+  {
+    setPixelColor(i, endPosition[i]);
+  }
+  show();
+  
+  charIndex++;
+
+  if(charIndex == 9)
+  {
+    //We've finished and left the matrix in the end position
+    setBrightness(savedBrightness);
+    currentEffect = PIXELEFFECT_NONE;
+    return true;  
+  }
+  else
+  {
+    //Wait a minimum of 100 milliseconds
+    readyTime = millis() + SFX_SHORTDELAY;
     return false;  
   }
 }
@@ -374,7 +558,11 @@ uint8_t PixelEffects::blue(uint32_t color)
 
 uint32_t PixelEffects::dim(uint32_t color)
 {
-    double multiplier = 0.6;
+  return dim(color, 0.6);  
+}
+
+uint32_t PixelEffects::dim(uint32_t color, double multiplier)
+{
     uint32_t dimRed    = (uint32_t)(red(color)   * multiplier);
     uint32_t dimBlue   = (uint32_t)(blue(color)  * multiplier);
     uint32_t dimGreen  = (uint32_t)(green(color) * multiplier);

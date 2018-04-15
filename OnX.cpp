@@ -101,6 +101,23 @@ void OnX::gameloop()
     }
 }
 
+void OnX::startDemo()
+{
+  mDemoMode = true;
+  player1 = new OnXComputerPlayer();
+  player2 = new OnXComputerPlayer();    
+  //Start with player1
+  currentPlayer = player1;
+  readyTime = millis() + 1000;
+
+  mCabinet->p1SFX.fillScreen(BLACK);
+  mCabinet->p1SFX.show();
+  mCabinet->p2SFX.fillScreen(BLACK);
+  mCabinet->p2SFX.show();
+  
+  currentPhase = ONX_CHANGE_PLAYER;
+}
+
 //Setup the pregame show
 void OnX::showPregame()
 {
@@ -568,6 +585,11 @@ void OnX::updateWinner()
   if(readyTime > millis())
     return;
 
+  if(mDemoMode)
+  {
+    asm volatile ("  jmp 0");
+  }
+
   flash = !flash;
   uint32_t flashColour = playerColour;
   if(!flash) flashColour = boardColour;
@@ -606,7 +628,5 @@ void OnX::debugBoard()
     if((i+1) % 3 == 0)
       Serial.print("\n");
   }
-  
-  Serial.println();
 }
 

@@ -8,9 +8,10 @@
 
 GameSelector::GameSelector(Cabinet* cab) : GameBase (cab, "Choose your game")
 {
-  Serial.println("Starting Selector");
+  Serial.println(F("Starting Selector"));
   mSelectedGame = 0;
   mDisplayGame = 1;
+  mIsDemo = false;
 }
 
 GameSelector::~GameSelector()
@@ -32,7 +33,12 @@ uint8_t GameSelector::selectedGame()
 
 void GameSelector::start()
 {
+   mDemoTime = millis() + DEMO_TIMEOUT;
    startName();
+}
+
+void GameSelector::startDemo()
+{
 }
 
 //This will be set to the function pointer of the main loop
@@ -41,11 +47,11 @@ void GameSelector::gameloop()
 {
   bool p1Ready = mCabinet->p1SFX.updateSFX();
   bool p2Ready = mCabinet->p2SFX.updateSFX();
-  if(p1Ready && p2Ready)
-  {
-    startName();
-  }
-
+  //if(p1Ready && p2Ready)
+  //{
+  //  startName();
+  //}
+  
   //Check to see if the fire button is pressed
   if(((mCabinet->p1Control.buttonState() & PlayerControl::FireButton) == PlayerControl::FireButton)
   || ((mCabinet->p2Control.buttonState() & PlayerControl::FireButton) == PlayerControl::FireButton))
@@ -92,12 +98,29 @@ void GameSelector::gameloop()
     startName();
     reset();
   }
-  
+
+  //if there is no action, and we've reached the timeout
+  if(millis() > mDemoTime)
+  {
+    //Start demo mode
+    Serial.println(F("Starting demo mode"));
+    mIsDemo = true;
+    mSelectedGame = mDisplayGame;  
+  }
+  else
+  {
+    uint32_t t = (mDemoTime - millis()) / 1000;
+    //Serial.print("demo in ");Serial.print(t);Serial.println(" seconds");
+  }
 };
 
 void GameSelector::startName()
 {
-  Serial.print("Starting game scroll ID: "); Serial.println(mDisplayGame);
+
+  //Reset the demo timer
+  mDemoTime = millis() + DEMO_TIMEOUT;
+  
+  //Serial.print("Starting game scroll ID: "); Serial.println(mDisplayGame);
   mCabinet->p1Display.clear();
   mCabinet->p1Display.setCursor(0, 0);
   mCabinet->p1Display.print(SELECTYOURGAME);
@@ -109,8 +132,8 @@ void GameSelector::startName()
   switch(mDisplayGame)
   {
     case BATTLESHIPS_INDEX:
-      mCabinet->p1SFX.scrollOnce(BATTLESHIPS);
-      mCabinet->p2SFX.scrollOnce(BATTLESHIPS);      
+      mCabinet->p1SFX.dissolve(battleshipsBoard);
+      mCabinet->p2SFX.dissolve(battleshipsBoard);
       mCabinet->p1Display.setCursor(2, 1);
       mCabinet->p1Display.print(BATTLESHIPS); 
       mCabinet->p2Display.setCursor(2, 1);
@@ -118,30 +141,43 @@ void GameSelector::startName()
       
     break;  
     case CONNECT4_INDEX:
-      mCabinet->p1SFX.scrollOnce(CONNECT4);
-      mCabinet->p2SFX.scrollOnce(CONNECT4);
+      mCabinet->p1SFX.drop(connect4Board);
+      mCabinet->p2SFX.drop(connect4Board);
       mCabinet->p1Display.setCursor(3, 1);
       mCabinet->p1Display.print(CONNECT4); 
       mCabinet->p2Display.setCursor(3, 1);
       mCabinet->p2Display.print(CONNECT4);
     break;  
     case ONX_INDEX:
-      mCabinet->p1SFX.scrollOnce(ONX);
-      mCabinet->p2SFX.scrollOnce(ONX);
+      mCabinet->p1SFX.wipe(onxBoard);
+      mCabinet->p2SFX.wipe(onxBoard);
       mCabinet->p1Display.setCursor(4, 1);
       mCabinet->p1Display.print("O and X"); 
       mCabinet->p2Display.setCursor(4, 1);
       mCabinet->p2Display.print("O and X");
     break;  
     case REVERSI_INDEX:
-      mCabinet->p1SFX.scrollOnce(REVERSI);
-      mCabinet->p2SFX.scrollOnce(REVERSI);
+      mCabinet->p1SFX.fade(reversiBoard);
+      mCabinet->p2SFX.fade(reversiBoard);
       mCabinet->p1Display.setCursor(4, 1);
       mCabinet->p1Display.print(REVERSI); 
       mCabinet->p2Display.setCursor(4, 1);
       mCabinet->p2Display.print(REVERSI);
     break;  
+    case MAZERACE_INDEX:
+      mCabinet->p1SFX.dissolve(mazeBoard);
+      mCabinet->p2SFX.dissolve(mazeBoard);
+      mCabinet->p1Display.setCursor(4, 1);
+      mCabinet->p1Display.print(MAZERACE); 
+      mCabinet->p2Display.setCursor(4, 1);
+      mCabinet->p2Display.print(MAZERACE);
+    break;  
   }  
+}
+
+bool GameSelector::isDemo()
+{
+  return mIsDemo;
 }
 
 

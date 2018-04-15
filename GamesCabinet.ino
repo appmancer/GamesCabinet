@@ -7,6 +7,7 @@
 #include "Connect4.h"
 #include "OnX.h"
 #include "Reversi.h"
+#include "MazeRace.h"
 #include "GameSelector.h"
 
 GameBase* currentGame;
@@ -15,6 +16,7 @@ Battleships* battleships;
 Connect4* connect4;
 Reversi*  reversi;
 OnX*      onx;
+MazeRace* mazeRace;
 GameSelector* gameSelector;
 
 
@@ -90,9 +92,11 @@ void loop()
   {
     //Check to see if a game has been chosen
     uint8_t game = gameSelector->selectedGame();
+    bool isDemo = gameSelector->isDemo();
+    
     if(game > 0)
     {
-      Serial.print("Game ");Serial.print(game);Serial.println(" has been chosen");
+      Serial.print(F("Game "));Serial.print(game);Serial.println(F(" has been chosen"));
       switch(game)
       {
         case   BATTLESHIPS_INDEX:
@@ -107,7 +111,12 @@ void loop()
         case   CONNECT4_INDEX:
           currentGame = (GameBase*)new Connect4(cab);
           break;
+        case   MAZERACE_INDEX:
+          currentGame = (GameBase*)new MazeRace(cab);
+          break;
       }
+      if(isDemo)
+        currentGame->startDemo();
     }
     else
     {

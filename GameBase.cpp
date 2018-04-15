@@ -3,6 +3,7 @@
 GameBase::GameBase(Cabinet* cab, const char* name) : mGameName(name)
 {
   mCabinet = cab;  
+  mDemoMode = false;
 }
 
 const char* GameBase::id()
@@ -19,4 +20,5 @@ void GameBase::printMessage(LiquidCrystal_I2C* lcd, const __FlashStringHelper* l
     lcd->setCursor(h2, 1);
     lcd->print(line2);     
 }
+
 
