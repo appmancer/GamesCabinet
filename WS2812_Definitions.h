@@ -135,7 +135,7 @@
 #define LIGHTSALMON		0xFFA07A
 #define ORANGE			0xFFA500
 #define LIGHTPINK		0xFFB6C1
-#define PINK			0xFFC0CB
+//#define PINK			0xFFC0CB
 #define GOLD			0xFFD700
 #define PEACHPUFF		0xFFDAB9
 #define NAVAJOWHITE		0xFFDEAD

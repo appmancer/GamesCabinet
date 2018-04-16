@@ -126,5 +126,6 @@ class Reversi : public GameBase
     ~Reversi();
     
     void gameloop();
+    void startDemo();
 };
 #endif

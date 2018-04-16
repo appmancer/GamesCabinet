@@ -54,21 +54,21 @@ bool BattleshipsComputerPlayer::hasMoved()
     return false;  
   }
 
-  Serial.println("Starting computer move");    
-  Serial.print("Position state at start of move 0x");
-  Serial.println(playerState.positionState, HEX);
+  //Serial.println("Starting computer move");    
+  //Serial.print("Position state at start of move 0x");
+  //Serial.println(playerState.positionState, HEX);
   
   
   //Time to move
   if(selectedCell < 0)
   {
-    Serial.println("Choosing a new cell");
-    Serial.print("Position state before new target 0x");
-    Serial.println(playerState.positionState, HEX);
+    //Serial.println("Choosing a new cell");
+    //Serial.print("Position state before new target 0x");
+    //Serial.println(playerState.positionState, HEX);
     //No cell has been selected yet to move towards.  Select one
     selectTargetCell();
-    Serial.print("Position state after target 0x");
-    Serial.println(playerState.positionState, HEX);
+    //Serial.print("Position state after target 0x");
+    //Serial.println(playerState.positionState, HEX);
   }
 
   /*
@@ -93,49 +93,49 @@ bool BattleshipsComputerPlayer::hasMoved()
   //Serial.print(" vDiff ");
   //Serial.println(vDiff);
 
-  Serial.print("Current Pos: ");Serial.print(currentPos); Serial.print(" Selected Pos: "); Serial.println(selectedCell);
+  //Serial.print("Current Pos: ");Serial.print(currentPos); Serial.print(" Selected Pos: "); Serial.println(selectedCell);
 
   if(currentPos == selectedCell)
     return true;
 
-  Serial.print("I think that I should move ");
+  //Serial.print("I think that I should move ");
   if(abs(vDiff) >= abs(hDiff))
   {
-    Serial.print("vertically ");
+    //Serial.print("vertically ");
     //Move vertically
     if(vDiff > 0)
     {
-      Serial.println("up.");
+      //Serial.println("up.");
       //Move up  
       currentPos -= 8;
     }
     else
     {
-      Serial.println("down.");
+      //Serial.println("down.");
       //Move down  
       currentPos += 8;
     }
   }
   else
   {
-    Serial.print("horizontally ");
+    //Serial.print("horizontally ");
     //Move horizontally
     if(hDiff > 0)
     {
       //Move left  
-      Serial.println("left.");     
+      //Serial.println("left.");     
       currentPos --;
     }
     else
     {
       //Move right
-      Serial.println("right.");
+      //Serial.println("right.");
       currentPos ++;
     }
   }
 
-  if(selectedCell == currentPos)
-    Serial.println("I've reached the target");
+  //if(selectedCell == currentPos)
+    //Serial.println("I've reached the target");
  
   uint8_t shipSize = playerState.selectedShip >> 4;
   
@@ -223,12 +223,12 @@ bool BattleshipsComputerPlayer::hasPressedButton(uint8_t button)
     return false;  
   }
 
-  Serial.print("Current Pos: ");Serial.print(playerState.positionState & 0x3F); Serial.print(" Selected Pos: "); Serial.println(selectedCell);
+  //Serial.print("Current Pos: ");Serial.print(playerState.positionState & 0x3F); Serial.print(" Selected Pos: "); Serial.println(selectedCell);
 
   //If our current position is the same as the target position, press the button
   if(selectedCell == (playerState.positionState & 0x3F))
   {
-    Serial.println("Computer player is firing");
+    //Serial.println("Computer player is firing");
     //Clear the selected cell
     lastSuccessfulCell = selectedCell; //If we are successful, 
     lastPositionHit = false;           //then lastPositionHit will be reset to true;
@@ -246,12 +246,12 @@ bool BattleshipsComputerPlayer::hasPressedButton(uint8_t button)
  */
 void BattleshipsComputerPlayer::selectTargetCell()
 {
-  Serial.print("Have we already hit a location? ");Serial.println(lastPositionHit);
+  //Serial.print("Have we already hit a location? ");Serial.println(lastPositionHit);
   
   //If we just hit a position last time then this must be an attack round
   if(lastPositionHit)
   {
-    Serial.println("Looking for an adjecent cell");
+    //Serial.println("Looking for an adjecent cell");
     //Select the next cell in the current search direction
     selectedCell = moveInDirection(lastSuccessfulCell, searchDirection);
     
@@ -280,10 +280,10 @@ void BattleshipsComputerPlayer::selectTargetCell()
       }
     }
 
-    Serial.print("Last successful attack was at ");
-    Serial.println(lastSuccessfulCell);
-    Serial.print("Found a cell to continue an attack: ");
-    Serial.println(selectedCell);
+    //Serial.print("Last successful attack was at ");
+    //Serial.println(lastSuccessfulCell);
+    //Serial.print("Found a cell to continue an attack: ");
+    //Serial.println(selectedCell);
   }  
   else
   {
@@ -309,14 +309,14 @@ void BattleshipsComputerPlayer::selectTargetCell()
     } 
     else
     {
-      Serial.println("Looking for a location to attack");  
+      //Serial.println("Looking for a location to attack");  
       findTargetFromDamaged();
     }
 
     //Failsafe - just starting picking random locations
     while(!isValidPosition(selectedCell, board))
     {
-      Serial.println("Failsafe - picking random location");
+      //Serial.println("Failsafe - picking random location");
        //Reselect a new one then
        selectedCell = random(0, 64);
     }
@@ -336,7 +336,7 @@ void BattleshipsComputerPlayer::selectTargetCell()
 
 void BattleshipsComputerPlayer::findTargetFromDamaged()
 {
-  Serial.println("We've search all the adjecent cells, lets look for damaged cells");
+  //Serial.println("We've search all the adjecent cells, lets look for damaged cells");
   //In C++ we can't return an array, so this method has been inlined
   
   //Get an array of all DAMAGED cells
@@ -347,7 +347,7 @@ void BattleshipsComputerPlayer::findTargetFromDamaged()
       c++;  
   }
 
-  Serial.print("Found "); Serial.print(c);Serial.println(" damaged but not destroyed cells ");
+  //Serial.print("Found "); Serial.print(c);Serial.println(" damaged but not destroyed cells ");
 
   if(c > 0)
   {
@@ -374,7 +374,7 @@ void BattleshipsComputerPlayer::findTargetFromDamaged()
       if(newCell != locs[c])
       {
         //We've found a damaged cell we can continue from
-        Serial.println("Found an old DAMAGED position");
+        //Serial.println("Found an old DAMAGED position");
         selectedCell = newCell;
         found = true;  
       }
@@ -396,31 +396,31 @@ void BattleshipsComputerPlayer::findTargetFromDamaged()
  */
 int BattleshipsComputerPlayer::evaluateTarget(int pos)
 {
-  Serial.print("Evaluating position ");
-  Serial.println(pos);
+  //Serial.print("Evaluating position ");
+  //Serial.println(pos);
   //Lets do it the stupid way...
   if(pos > 7 && trackingBoard[pos - 8] == WATER)
   {
-    Serial.println("Found water to the north");
+    //Serial.println("Found water to the north");
     return pos-8;
   }
   else if(pos < 57 && trackingBoard[pos + 8] == WATER)
   {
-    Serial.println("Found water to the south");
+    //Serial.println("Found water to the south");
     return pos+8;  
   }
   else 
   { 
     int hPos = pos % 8;
-    Serial.print("Pos ");Serial.print(pos);Serial.print(" has an hPos of "); Serial.println(hPos);
+    //Serial.print("Pos ");Serial.print(pos);Serial.print(" has an hPos of "); Serial.println(hPos);
     if(hPos > 0 && trackingBoard[pos - 1] == WATER)
     {
-      Serial.println("Found water to the west"); 
+      //Serial.println("Found water to the west"); 
       return pos - 1;  
     }
     else if(hPos < 7 && trackingBoard[pos + 1] == WATER)
     {
-      Serial.println("Found water to the east");
+      //Serial.println("Found water to the east");
       return pos + 1;
     }
   }
@@ -467,8 +467,7 @@ void BattleshipsComputerPlayer::reset()
   lastPositionHit = false;
   lastSuccessfulCell = -1;
   
-  Serial.print("Reset cell position ");
-  Serial.println(selectedCell);
+  //Serial.print("Reset cell position ");Serial.println(selectedCell);
 
   readyTime = 0;
 }
@@ -487,19 +486,19 @@ bool BattleshipsComputerPlayer::isValidPosition(int initialPos, uint8_t* board)
   {
     if(rotation == 1)
     {
-      Serial.println("Validating vertical ship");
+      //Serial.println("Validating vertical ship");
       if((initialPos / 8) + shipSize > 7)
       {
-        Serial.println("This position is too close to the bottom of the screen");  
+        //Serial.println("This position is too close to the bottom of the screen");  
         return false;
       }
     }
     else
     {
-      Serial.println("Validating horizontal ship");
+      //Serial.println("Validating horizontal ship");
       if((initialPos % 8) + shipSize > 7)
       {
-        Serial.println("This position is too close to the right of the screen");  
+        //Serial.println("This position is too close to the right of the screen");  
         return false;
       }
     }
@@ -541,9 +540,7 @@ bool BattleshipsComputerPlayer::isValidPosition(int initialPos, uint8_t* board)
 void BattleshipsComputerPlayer::hit()
 {
   remainingShips--; 
-  Serial.print("You have ");
-  Serial.print(remainingShips);
-  Serial.println(" cells remaining");
+  //Serial.print("You have ");Serial.print(remainingShips); Serial.println(" cells remaining");
 }
 
 
@@ -570,9 +567,7 @@ void BattleshipsComputerPlayer::debugPositions()
   Serial.println("Ship placed positions");
   for(int i =0; i <6; i++)
   {
-    Serial.print("Ship ");
-    Serial.print(i);
-    Serial.print(" value ");
+    Serial.print("Ship ");Serial.print(i);Serial.print(" value ");
     Serial.print(playerState.shipPositions[i]);
     uint8_t pos = playerState.shipPositions[i] & 0x3F;
     Serial.print(" pixel 0x");

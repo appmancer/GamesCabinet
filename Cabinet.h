@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "PlayerControl.h"
 #include <Adafruit_NeoMatrix.h>
+//This is the non-package library from https://bitbucket.org/fmalpartida/new-liquidcrystal/downloads/
 #include <LiquidCrystal_I2C.h>
 #include <gamma.h>
 #include "WS2812_Definitions.h"
@@ -14,7 +15,8 @@
 #define CONNECT4_INDEX      2
 #define ONX_INDEX           3
 #define REVERSI_INDEX       4
-#define MAX_INDEX           4
+#define MAZERACE_INDEX      5
+#define MAX_INDEX           5
 
 //Sounds
 #define SFX_DRAW      1
@@ -31,10 +33,9 @@
 
 typedef struct Cabinet
 {
-	//Player 1 encoders
-  PlayerControl p1Control = PlayerControl(28, 34, 30, 35, 29, 31, 43);
-  PlayerControl p2Control = PlayerControl(22, 19, 24, 18, 23, 25, 42);
- 
+  //Player 1 encoders
+  PlayerControl p1Control = PlayerControl(2, 34, 3, 30, 29, 31, 43);
+  PlayerControl p2Control = PlayerControl(19, 22, 18, 24, 23, 25, 42);
 	//Volume control
 	//Encoder volume		    = Encoder(52, 53);
 	//const uint8_t volumeButton	= 5;

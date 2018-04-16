@@ -8,6 +8,7 @@
 
 #ifndef PLAYERCONTROL_H
 #define PLAYERCONTROL_H
+//This is Paul Stoffregen's Encoder library
 #include <Encoder.h>
 
 class PlayerControl

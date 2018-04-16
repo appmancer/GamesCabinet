@@ -90,6 +90,8 @@ class Battleships : public GameBase
     //and be called when Battleships is the active game
     void gameloop();
 
+    void startDemo();
+
     void updateEffects();
     void updatePregame();
     void updateSetup();

@@ -10,7 +10,7 @@
 
 Connect4::Connect4(Cabinet* cab) : GameBase (cab, "Connect 4")
 {
-  Serial.println("Starting Connect4");
+  Serial.println(F("Starting Connect4"));
   player1 = NULL;
   player2 = NULL;
   reset();
@@ -60,7 +60,7 @@ void Connect4::reset()
     winningPieces[i] = -1;  
   }
   debugBoard();
-  Serial.println("Connect4 reset and ready");
+  Serial.println(F("Connect4 reset and ready"));
 }
 
 void Connect4::gameloop()
@@ -87,6 +87,24 @@ void Connect4::gameloop()
         showPregame();
         break;
     }
+}
+
+void Connect4::startDemo()
+{
+  mDemoMode = true;
+  player1 = new Connect4ComputerPlayer();
+  player2 = new Connect4ComputerPlayer();
+
+  //Set the screens to all sea green
+  mCabinet->p1SFX.fillScreen(BLACK);
+  mCabinet->p1SFX.show();
+  mCabinet->p2SFX.fillScreen(BLACK);
+  mCabinet->p2SFX.show();
+ 
+  //Start with player1
+  currentPlayer = player2;
+  readyTime = millis() + 1000;
+  currentPhase = CONNECT4_CHANGE_PLAYER;
 }
 
 //Setup the pregame show
@@ -258,7 +276,7 @@ void Connect4::updateMainGame()
     debugBoard();
     if(board[selectedColumn + 16] > 0)
     {
-      Serial.println("Column is full, exiting");  
+      //Serial.println("Column is full, exiting");  
     }
     else
     { 
@@ -313,7 +331,7 @@ void Connect4::updateEffects()
     {
       //play sound
       mCabinet->audioController.playFileIndex(SFX_TICK);
-      Serial.println("Changing player");
+      //Serial.println("Changing player");
       readyTime = millis() + 1000;
       currentPhase = CONNECT4_CHANGE_PLAYER;
     }
@@ -380,7 +398,6 @@ void Connect4::startWinner()
 {
   //play sound
   mCabinet->audioController.playFileIndex(SFX_WIN);
-  readyTime = millis();
   currentPhase = CONNECT4_WINNER;
 
   printMessage(attackingLCD, F("You have won"), F("Congratulations!"), 2, 0);
@@ -392,6 +409,11 @@ void Connect4::updateWinner()
 {
   if(readyTime > millis())
     return;  
+
+  if(mDemoMode)
+  {
+    asm volatile ("  jmp 0");  
+  }
 
   flashOn = !flashOn;
   uint32_t flashColour = flashOn ? playerColour : BLACK;
@@ -455,53 +477,57 @@ bool Connect4::testLine(uint8_t testBoard[], uint32_t lastPosition, uint32_t inc
       //Serial.println(nextPos);
       winningPieces[i++] = nextPos;
       nextPos -= increment;
+      //Check for the left hand edge
+      if(increment == 1 && (nextPos % 8) > col) //Now we've incremented, see if our column has increased (ie. we've wrapped on to the right)
+      {
+        //We've wrapped on the right hand side, quit
+        //Serial.println("Left edge, continue search on right");
+        break;  
+      }
     } 
     else
     {
       //Serial.println("Not a match, stopping search to left");
       break;
     }
-    //Check for the left hand edge
-    if(increment == 1 && nextPos % 8 > col) //Now we've incremented, see if our column has increased (ie. we've wrapped on to the right)
-    {
-      //We've wrapped on the right hand side, quit
-      //Serial.println("Left edge, continue search on right");
-      break;  
-    }
   }
 
   //Serial.println("Checking positions to the right");
   //Now check to see if there are any more pieces to the right
   nextPos = lastPosition + increment;
-  while(nextPos < BOARDSIZE)
-  {
-    int col = nextPos % 8;
-    //Serial.print("Checking position ");
-    //Serial.println(nextPos);
-    //Serial.print("Current colour ");
-    //Serial.println(counterColour);
-    //Serial.print("Board pos ");
-    //Serial.println(testBoard[nextPos]);
-    if(testBoard[nextPos] == counterColour)
-    {
-      //found a matching piece
-      //Serial.print("Found a match at position ");
-      //Serial.println(nextPos);
-      winningPieces[i++] = nextPos;
-      nextPos += increment;
-    } 
-    else
-    {
-      //Serial.println("Not a match, stopping search to right");
-      break;
-    } 
 
-    //Check for the left hand edge, unless were testing vertically
-    if(increment == 1 && nextPos % 8 < col) //Now we've incremented, see if our column has increased (ie. we've wrapped on to the left)
+  //Check that we've not just jumped onto the next line
+  if((nextPos % 8) > (lastPosition % 8))
+  {
+    while(nextPos < BOARDSIZE)
     {
-      //We've wrapped on the right hand side, quit
-      //Serial.println("Right edge, aborting");
-      break;  
+      int col = nextPos % 8;
+      //Serial.print("Checking position ");
+      //Serial.println(nextPos);
+      //Serial.print("Current colour ");
+      //Serial.println(counterColour);
+      //Serial.print("Board pos ");
+      //Serial.println(testBoard[nextPos]);
+      if(testBoard[nextPos] == counterColour)
+      {
+        //found a matching piece
+        //Serial.print("Found a match at position ");
+        //Serial.println(nextPos);
+        winningPieces[i++] = nextPos;
+        nextPos += increment;
+        //Check for the left hand edge, unless were testing vertically
+        if(increment == 1 && (nextPos % 8) < col) //Now we've incremented, see if our column has increased (ie. we've wrapped on to the left)
+        {
+          //We've wrapped on the right hand side, quit
+          //Serial.println("Right edge, aborting");
+          break;  
+        }
+      } 
+      else
+      {
+        //Serial.println("Not a match, stopping search to right");
+        break;
+      } 
     }
   }
 
@@ -510,8 +536,15 @@ bool Connect4::testLine(uint8_t testBoard[], uint32_t lastPosition, uint32_t inc
   
   if(i > 3)
   {
-    Serial.println("Found a line");  
+    //Serial.println("Found a line");  
     hasWon = true;
+  
+    //Serial.println("Willing line:");
+    //for(int k=0; k<i; k++)
+    //{
+    //  Serial.print(winningPieces[k]);Serial.print(", ");  
+    //}
+    //Serial.println("");
   }
 
   return hasWon;
@@ -541,3 +574,4 @@ void Connect4::debugBoard()
   
   Serial.println();
  }
+ 

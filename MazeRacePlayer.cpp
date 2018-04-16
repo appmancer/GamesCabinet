@@ -2,7 +2,7 @@
 
 MazeRacePlayer::MazeRacePlayer()
 {
-	currentPos = 65535; //Use max long to denote an unset position
+	mCurrentPos = 65535; //Use max long to denote an unset position
 }
 
 MazeRacePlayer::~MazeRacePlayer()
@@ -12,10 +12,15 @@ MazeRacePlayer::~MazeRacePlayer()
 
 void MazeRacePlayer::setPosition(uint16_t newPos)
 {
-	currentPos = newPos;
+	mCurrentPos = newPos;
 }
 
 uint16_t MazeRacePlayer::getPosition()
 {
-	return currentPos;
+	return mCurrentPos;
+}
+
+MazeRacePlayerState* MazeRacePlayer::getState()
+{
+ return &mPlayerState;
 }
