@@ -512,7 +512,7 @@ bool PixelEffects::updateFadeOut()
 
 bool PixelEffects::updateFadeIn()
 {
-  uint8_t unit = savedBrightness / 10;
+  uint8_t unit = savedBrightness / 20;
   setBrightness(charIndex * unit);
   //Redraw the colours
   for(int i=0; i<64; i++)
@@ -523,7 +523,7 @@ bool PixelEffects::updateFadeIn()
   
   charIndex++;
 
-  if(charIndex == 9)
+  if(charIndex == 20)
   {
     //We've finished and left the matrix in the end position
     setBrightness(savedBrightness);
