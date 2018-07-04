@@ -68,7 +68,7 @@ class Connect4 : public GameBase
     void debugBoard();
     void drawCursor();
 
-    bool testLine(uint8_t testBoard[], uint32_t lastPosition, uint32_t increment);
+    uint8_t testLine(uint8_t startPos, int8_t offset, int8_t expectColumnChange);
     
   public:
     Connect4(Cabinet* cab);

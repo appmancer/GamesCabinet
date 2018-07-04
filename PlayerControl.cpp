@@ -21,7 +21,7 @@ uint8_t PlayerControl::buttonState()
 {
   uint8_t state = 0;
   //The firebutton is pulled up, so when it is pressed, it is LOW
-  if(digitalRead(fireButton) == HIGH)
+  if(digitalRead(fireButton) == LOW)
   {
     state+= FireButton;  
   }

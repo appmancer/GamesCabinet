@@ -11,7 +11,7 @@
 #include "OnXComputerPlayer.h"
 #include "OnXHumanPlayer.h"
 
-OnX::OnX(Cabinet* cab) : GameBase (cab, "Noughts and Crosses")
+OnX::OnX(Cabinet* cab) : GameBase (cab)
 {
   Serial.println(F("Starting OnX"));
   player1 = NULL;
@@ -34,13 +34,7 @@ void OnX::reset()
   uint16_t textCol = mCabinet->p1SFX.Color(255, 0, 0);
   mCabinet->p1SFX.setTextColor(textCol);
   mCabinet->p2SFX.setTextColor(textCol);
-
-  mCabinet->p1TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p1TopLight.show();
- 
-  mCabinet->p2TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p2TopLight.show();
-
+  
   //Reset the setup states
   
   if(player1 != NULL)
@@ -123,13 +117,6 @@ void OnX::showPregame()
 {
   currentPhase = ONX_PREGAME;
   //Scroll the game name
- 
-  mCabinet->p1TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p1TopLight.show();
- 
-  mCabinet->p2TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p2TopLight.show();
-
   mCabinet->p1SFX.scrollOnce(mGameName);
   mCabinet->p2SFX.scrollOnce(mGameName);
 }
@@ -242,14 +229,8 @@ void OnX::startMove()
     playerColour = player2Colour;
     counterColour = PLAYER_2_COUNTER;
     opponentColour = PLAYER_1_COUNTER;
-    
-    mCabinet->p1TopLight.setPixelColor(0, BLACK);
-    mCabinet->p1TopLight.show();
-    mCabinet->p2TopLight.setPixelColor(0, GREEN);
-    mCabinet->p2TopLight.show();
     defendingLCD = &(mCabinet->p1Display);
     attackingLCD = &(mCabinet->p2Display); 
-    winnerLight = &(mCabinet->p2TopLight);
   }
   else
   {
@@ -257,19 +238,13 @@ void OnX::startMove()
     playerColour = player1Colour;
     counterColour = PLAYER_1_COUNTER;
     opponentColour = PLAYER_2_COUNTER;
-    
-    mCabinet->p1TopLight.setPixelColor(0, GREEN);
-    mCabinet->p1TopLight.show();
-    mCabinet->p2TopLight.setPixelColor(0, BLACK);
-    mCabinet->p2TopLight.show();
     defendingLCD = &(mCabinet->p2Display);
     attackingLCD = &(mCabinet->p1Display);
-    winnerLight = &(mCabinet->p1TopLight);
   }
   currentPlayer->getState()->buttonState = 0;
   
   printMessage(attackingLCD, F("Your move"), F(""), 2, 3);
-  printMessage(defendingLCD, F("Please wait"), F(""), 1, 4);
+  printMessage(defendingLCD, F("Please wait"), F(""), 2, 4);
 
   drawCursor();
 
@@ -326,7 +301,7 @@ void OnX::updateMainGame()
       //Check to see if we have a winner
       if(findLines(counterColour, 3) > 0)
       {
-        Serial.println("Winner!");
+        //Serial.println("Winner!");
         
         startWinner();
       }
@@ -342,8 +317,7 @@ void OnX::updateMainGame()
     else
     {
       mCabinet->audioController.playFileIndex(SFX_INVALID);
-      Serial.println("Button pressed but not valid position");
-      Serial.print("Cursor: "); Serial.print(cursorColour, HEX); Serial.print(" PlayerColour:");Serial.println(playerColour, HEX);
+      //Serial.println("Button pressed but not valid position");Serial.print("Cursor: "); Serial.print(cursorColour, HEX); Serial.print(" PlayerColour:");Serial.println(playerColour, HEX);
     }
   }
 }
@@ -545,13 +519,20 @@ void OnX::startDraw()
   
   printMessage(attackingLCD, F("It's a draw"), F(""), 2, 0);
   printMessage(defendingLCD, F("It's a draw"), F(""), 2, 0);
-
+  readyTime = millis() + 5000;
 
   currentPhase = ONX_DRAW;
 }
 
 void OnX::updateDraw()
 {
+  
+  if(mDemoMode && (readyTime > millis()))
+  {
+    //Reset the chip
+    Serial.println(F("OnX resetting now"));
+    digitalWrite(RESET_PIN, HIGH);
+  }
   if(mCabinet->p1Control.buttonState() > 0 || mCabinet->p2Control.buttonState() > 0)
   {
     //Restart
@@ -569,7 +550,7 @@ void OnX::startWinner()
 
   flash = true;
   
-  readyTime = millis() + 1000;
+  readyTime = millis() + 5000;
   currentPhase = ONX_WINNER;
 
 }
@@ -587,7 +568,9 @@ void OnX::updateWinner()
 
   if(mDemoMode)
   {
-    asm volatile ("  jmp 0");
+    //Reset the chip
+    Serial.println(F("OnX resetting now"));
+    digitalWrite(RESET_PIN, HIGH);
   }
 
   flash = !flash;

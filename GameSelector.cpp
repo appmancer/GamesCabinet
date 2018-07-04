@@ -6,12 +6,13 @@
 #include "GameSelector.h"
 #include "PlayerControl.h"
 
-GameSelector::GameSelector(Cabinet* cab) : GameBase (cab, "Choose your game")
+GameSelector::GameSelector(Cabinet* cab) : GameBase (cab)
 {
   Serial.println(F("Starting Selector"));
   mSelectedGame = 0;
   mDisplayGame = 1;
   mIsDemo = false;
+  currentPhase = SELECTOR_NONE; 
 }
 
 GameSelector::~GameSelector()
@@ -34,6 +35,7 @@ uint8_t GameSelector::selectedGame()
 void GameSelector::start()
 {
    mDemoTime = millis() + DEMO_TIMEOUT;
+   currentPhase = SELECTOR_CHOOSE;
    startName();
 }
 
@@ -41,16 +43,26 @@ void GameSelector::startDemo()
 {
 }
 
-//This will be set to the function pointer of the main loop
-//and be called when Battleships is the active game
 void GameSelector::gameloop()
+{
+  switch(currentPhase)
+  {
+    case SELECTOR_NONE:
+      start();
+      break;
+    case SELECTOR_CHOOSE:
+      updateChooseGame();
+      break;
+    case SELECTOR_DEMO:
+      updateScroll();
+      break; 
+  }
+}
+
+void GameSelector::updateChooseGame()
 {
   bool p1Ready = mCabinet->p1SFX.updateSFX();
   bool p2Ready = mCabinet->p2SFX.updateSFX();
-  //if(p1Ready && p2Ready)
-  //{
-  //  startName();
-  //}
   
   //Check to see if the fire button is pressed
   if(((mCabinet->p1Control.buttonState() & PlayerControl::FireButton) == PlayerControl::FireButton)
@@ -69,6 +81,7 @@ void GameSelector::gameloop()
      mCabinet->p2Control.hEncoder.read() <= -4 ||
      mCabinet->p2Control.vEncoder.read() <= -4)
   {
+    //Serial.println("Encoder left");
     //Move left  
     if(mDisplayGame == 1)
     {
@@ -86,6 +99,7 @@ void GameSelector::gameloop()
           mCabinet->p2Control.hEncoder.read() >= 4 ||
           mCabinet->p2Control.vEncoder.read() >= 4)
   {
+    //Serial.println("Encoder right");
     //Move right
     if(mDisplayGame == MAX_INDEX)
     {
@@ -105,7 +119,19 @@ void GameSelector::gameloop()
     //Start demo mode
     Serial.println(F("Starting demo mode"));
     mIsDemo = true;
-    mSelectedGame = mDisplayGame;  
+    //Choose a game at random  
+    randomSeed(analogRead(0));
+    mDisplayGame = random(1, 6);
+    strcpy_P(gameName, (char*)pgm_read_word(&(names_table[mDisplayGame - 1]))); // Necessary casts and dereferencing, just copy.
+    mCabinet->p1SFX.scrollOnce(gameName);
+    mCabinet->p2SFX.scrollOnce(gameName);  
+    mCabinet->p1Display.clear();
+    mCabinet->p1Display.setCursor(3, 0);
+    mCabinet->p1Display.print(F("Demo mode"));
+    mCabinet->p2Display.clear();
+    mCabinet->p2Display.setCursor(3, 0);
+    mCabinet->p2Display.print(F("Demo mode"));
+    currentPhase = SELECTOR_DEMO;
   }
   else
   {
@@ -114,65 +140,83 @@ void GameSelector::gameloop()
   }
 };
 
-void GameSelector::startName()
-{
+void GameSelector::updateScroll()
+{  
+  bool p1Ready = mCabinet->p1SFX.updateSFX();
+  bool p2Ready = mCabinet->p2SFX.updateSFX();
+  if(p1Ready && p2Ready)
+  {
+    if(currentPhase == SELECTOR_DEMO)
+    {
+      mSelectedGame = mDisplayGame;  
+    }
+  }
+}
 
+void GameSelector::startName()
+{    
   //Reset the demo timer
   mDemoTime = millis() + DEMO_TIMEOUT;
   
   //Serial.print("Starting game scroll ID: "); Serial.println(mDisplayGame);
   mCabinet->p1Display.clear();
   mCabinet->p1Display.setCursor(0, 0);
-  mCabinet->p1Display.print(SELECTYOURGAME);
+  mCabinet->p1Display.print(F("Choose your game"));
   mCabinet->p2Display.clear();
   mCabinet->p2Display.setCursor(0, 0);
-  mCabinet->p2Display.print(SELECTYOURGAME);
-  
-  
+  mCabinet->p2Display.print(F("Choose your game"));
+
+  uint32_t matrix[64];
+    
   switch(mDisplayGame)
   {
     case BATTLESHIPS_INDEX:
-      mCabinet->p1SFX.dissolve(battleshipsBoard);
-      mCabinet->p2SFX.dissolve(battleshipsBoard);
+      for(int i=0; i<64; i++) matrix[i] = pgm_read_dword_far(battleshipsBoard + i);
+      mCabinet->p1SFX.dissolve(matrix);
+      mCabinet->p2SFX.dissolve(matrix);
       mCabinet->p1Display.setCursor(2, 1);
-      mCabinet->p1Display.print(BATTLESHIPS); 
       mCabinet->p2Display.setCursor(2, 1);
-      mCabinet->p2Display.print(BATTLESHIPS);
       
     break;  
     case CONNECT4_INDEX:
-      mCabinet->p1SFX.drop(connect4Board);
-      mCabinet->p2SFX.drop(connect4Board);
-      mCabinet->p1Display.setCursor(3, 1);
-      mCabinet->p1Display.print(CONNECT4); 
+      for(int i=0; i<64; i++) matrix[i] = pgm_read_dword_far(connect4Board + i);
+      mCabinet->p1SFX.drop(matrix);
+      mCabinet->p2SFX.drop(matrix);
+      mCabinet->p1Display.setCursor(3, 1); 
       mCabinet->p2Display.setCursor(3, 1);
-      mCabinet->p2Display.print(CONNECT4);
     break;  
     case ONX_INDEX:
-      mCabinet->p1SFX.wipe(onxBoard);
-      mCabinet->p2SFX.wipe(onxBoard);
+      for(int i=0; i<64; i++) matrix[i] = pgm_read_dword_far(onxBoard + i);
+      mCabinet->p1SFX.wipe(matrix);
+      mCabinet->p2SFX.wipe(matrix);
       mCabinet->p1Display.setCursor(4, 1);
-      mCabinet->p1Display.print("O and X"); 
-      mCabinet->p2Display.setCursor(4, 1);
-      mCabinet->p2Display.print("O and X");
+      mCabinet->p2Display.setCursor(0, 1);
     break;  
     case REVERSI_INDEX:
-      mCabinet->p1SFX.fade(reversiBoard);
-      mCabinet->p2SFX.fade(reversiBoard);
+      for(int i=0; i<64; i++) matrix[i] = pgm_read_dword_far(reversiBoard + i);
+      mCabinet->p1SFX.fade(matrix);
+      mCabinet->p2SFX.fade(matrix);
       mCabinet->p1Display.setCursor(4, 1);
-      mCabinet->p1Display.print(REVERSI); 
       mCabinet->p2Display.setCursor(4, 1);
-      mCabinet->p2Display.print(REVERSI);
     break;  
     case MAZERACE_INDEX:
-      mCabinet->p1SFX.dissolve(mazeBoard);
-      mCabinet->p2SFX.dissolve(mazeBoard);
-      mCabinet->p1Display.setCursor(4, 1);
-      mCabinet->p1Display.print(MAZERACE); 
+      for(int i=0; i<64; i++) matrix[i] = pgm_read_dword_far(mazeBoard + i);
+      mCabinet->p1SFX.dissolve(matrix);
+      mCabinet->p2SFX.dissolve(matrix);
+      mCabinet->p1Display.setCursor(4, 1); 
       mCabinet->p2Display.setCursor(4, 1);
-      mCabinet->p2Display.print(MAZERACE);
     break;  
-  }  
+  }
+  if(mDisplayGame == ONX_INDEX)
+  {
+    strcpy_P(gameName, (char*)pgm_read_word(&(names_table[MAX_INDEX]))); // The short version of 0s and Xs is at the end.    
+  }
+  else
+  {
+    strcpy_P(gameName, (char*)pgm_read_word(&(names_table[mDisplayGame - 1]))); // Necessary casts and dereferencing, just copy.
+  }
+  mCabinet->p1Display.print(gameName); 
+  mCabinet->p2Display.print(gameName); 
 }
 
 bool GameSelector::isDemo()

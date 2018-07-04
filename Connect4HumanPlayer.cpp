@@ -68,16 +68,15 @@ bool Connect4HumanPlayer::hasPressedButton(uint8_t button)
   bool newPressed = ((newState & button) == button);
 
   //Debug buttons
-  if(0)
-  {
-    Serial.print(newPressed & button);
-    Serial.print(" | ");
-    Serial.print(newPressed);
-    Serial.print(" | ");
-    Serial.print(oldPressed);
-    Serial.print(" | ");
-    Serial.println(newPressed && !oldPressed);
-  }
+  //if(0)
+  //{
+    //Serial.print(newPressed & button);    Serial.print(" | ");
+    //Serial.print(newPressed);
+    //Serial.print(" | ");
+    //Serial.print(oldPressed);
+    //Serial.print(" | ");
+    //Serial.println(newPressed && !oldPressed);
+  //}
   
   //Save the new state, but only for the tested button
   if(newPressed)

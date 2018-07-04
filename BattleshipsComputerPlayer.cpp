@@ -564,10 +564,10 @@ bool BattleshipsComputerPlayer::isDestroyed()
 
 void BattleshipsComputerPlayer::debugPositions()
 {
-  Serial.println("Ship placed positions");
+  Serial.println(F("Ship placed positions"));
   for(int i =0; i <6; i++)
   {
-    Serial.print("Ship ");Serial.print(i);Serial.print(" value ");
+    Serial.print(F("Ship "));Serial.print(i);Serial.print(F(" value "));
     Serial.print(playerState.shipPositions[i]);
     uint8_t pos = playerState.shipPositions[i] & 0x3F;
     Serial.print(" pixel 0x");

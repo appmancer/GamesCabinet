@@ -25,6 +25,8 @@
 #define PIXELEFFECT_DIR_LR      1
 #define PIXELEFFECT_DIR_RL      -1
 
+#define PIXELEFFECT_DEFAULT_BRIGHTNESS 50
+
  class PixelEffects : public Adafruit_NeoMatrix
  {
     public:

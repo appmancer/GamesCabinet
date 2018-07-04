@@ -19,8 +19,7 @@ bool Connect4ComputerPlayer::hasMoved()
   if(readyTime < millis())
     return false;
 
-  Serial.print("Aiming for column ");
-  Serial.println(selectedColumn);
+  //Serial.print("Aiming for column ");Serial.println(selectedColumn);
 
   if(playerState.controlState < selectedColumn)
   {
@@ -48,7 +47,7 @@ bool Connect4ComputerPlayer::hasPressedButton(uint8_t button)
   //If we're at the right column, press fire
   if(selectedColumn == playerState.controlState)
   {
-    Serial.println("Computer player is pressing fire");
+    Serial.println(F("Computer player is pressing fire"));
     selectedColumn = 0xFF; //reset  
     return true;
   }
@@ -68,25 +67,30 @@ void Connect4ComputerPlayer::setBoard(uint8_t* mainBoard, uint32_t counter)
   board = mainBoard;  
   counterColour = counter;
   reset();
-  Serial.println("Board has been initialised");
+  Serial.println(F("Board has been initialised"));
 }
 
 uint8_t Connect4ComputerPlayer::choosePosition()
 { 
   uint8_t longestRow = 0;
-  Serial.println("Connect 4 computer playing is looking for a valid move");
+  Serial.println(F("Connect 4 computer playing is looking for a valid move"));
 
   if(board == NULL)
   {
-    Serial.println("Board is null you nutter!");
+    Serial.println(F("Board is null you nutter!"));
     return 0xFF;  
   }
+
+  uint8_t validPositions[8];
+  //Reset valid positions
+  for(uint8_t c =0; c < 8; c++)validPositions[c] = 0xFF;
+  uint8_t validPosCounter = 0;
   
   //Iterate through all 8 columns
   for(uint8_t col =0; col < 8; col++)
   {
     //We have to work out the final place for this column
-    uint8_t nextPos = col + 16; //we have 6 rows of gamespace, so start on the top valid position
+    uint8_t nextPos = col + 8; //we have 6 rows of gamespace, so start on row above the top valid position
     bool found = false;
     while(!found) //Look to see if the next position is black
     {
@@ -107,25 +111,90 @@ uint8_t Connect4ComputerPlayer::choosePosition()
     if(nextPos == col + 16)
     {
       //this column is full
-      Serial.print("Column ");Serial.print(col);Serial.println(" is full.");
+      //Serial.print("Column ");Serial.print(col);Serial.println(" is full.");
     }
     else
     { 
       //Then see if this new position will win
-      Serial.print("Column ");Serial.print(col);Serial.print(" settles at position ");Serial.println(nextPos);
-  
-      //Check the board at this position
-      uint8_t thisLen = lineLength(nextPos);
-      if(thisLen > longestRow)
+      //Serial.print("Column ");Serial.print(col);Serial.print(" settles at position ");Serial.println(nextPos);
+      validPositions[validPosCounter++] = nextPos;
+    }
+  }
+
+  //From the list of valid positions, choose the one with the longest line.
+  uint8_t lineLengths[validPosCounter];
+  uint8_t kingOfTheHill = 0;
+  uint8_t kingCounter = 0;
+  for(uint8_t c=0; c<validPosCounter; c++)
+  {
+    uint8_t thisLine = longestLine(validPositions[c], counterColour); 
+    if(thisLine > kingOfTheHill)
+    {
+      kingOfTheHill = thisLine;
+      kingCounter = 1;
+    }
+    else if(thisLine == kingOfTheHill)
+    { 
+      kingCounter++;
+    } 
+    lineLengths[c] = thisLine;
+  }
+
+  //Serial.print("There are "); Serial.print(kingCounter); Serial.print(" lines of length ");Serial.println(kingOfTheHill);
+  uint8_t moves[kingCounter];
+  uint8_t validMovesCounter = 0;
+  for(int i=0; i<validPosCounter; i++)
+  {
+    if(lineLengths[i] == kingOfTheHill)
+    {
+      //If the move at validPostions[i] is one of the longest moves, then copy the position to moves
+      moves[validMovesCounter++] = validPositions[i];  
+    }
+  }
+
+  uint8_t blockOppo = 0xFF;
+  if(kingOfTheHill < 4)
+  {
+    //Would this be a winning move for my opponent?  
+    for(uint8_t c=0; c<validPosCounter; c++)
+    {
+      uint8_t oppoColour = counterColour == 2 ? 4 : 2;
+      uint8_t thisLine = longestLine(validPositions[c], oppoColour); 
+      if(thisLine > 3)
       {
-        //We have a new longest row
-        Serial.print("New longest line found when using column ");Serial.println(col);
-        selectedColumn = col;
-        longestRow = thisLen;  
+        //Block the opposition
+        blockOppo = validPositions[c] % 8;
       }
     }
   }
 
+  //If one of these moves is the winning move...
+  if(kingOfTheHill > 3)
+  {
+    //If there is only one longest move...
+    if(validMovesCounter == 1)
+    {
+      selectedColumn = moves[0] % 8;
+    }
+    else
+    {
+      selectedColumn = moves[random(validMovesCounter)]  % 8;
+    }
+  }
+  else
+  {
+     if(blockOppo < 0xFF)
+     {
+        //Stop the opponent
+        selectedColumn = blockOppo; 
+     }
+     else
+     {
+        //Choose next best move from list
+        selectedColumn = moves[random(validMovesCounter)]  % 8; 
+     }
+  }
+  
   //If we've still not chosen (no line was better than 0), choose a random line
   if(selectedColumn == 0xFF)
   {
@@ -137,108 +206,73 @@ uint8_t Connect4ComputerPlayer::choosePosition()
   return selectedColumn;
 }
 
-// Returns the length of the longest line if you add a counter at the new position
-uint8_t Connect4ComputerPlayer::lineLength(uint8_t nextCounter)
+uint8_t Connect4ComputerPlayer::longestLine(uint8_t pos, uint8_t myCounter)
 {
-  //First test, horizontal
-  int i = 0;
-  int longest = 0;
-  
-  Serial.println("");Serial.print("Checking position ");Serial.println(nextCounter);
+  uint8_t maxLen = 0;
+  uint8_t thisLen = 0;
+  Serial.print("Testing position ");Serial.println(pos);
+  thisLen = testLine(pos, 9, 1, myCounter); //Diagonal, top-left to bottom-right \
+  if(thisLen > maxLen) maxLen = thisLen;
 
-  longest = testLine(nextCounter, 1);
-  Serial.print("\tHorizontal line length : ");
-  Serial.println(longest);
-  
-  i = testLine(nextCounter, 8);
-  Serial.print("\tVertical line length : ");
-  Serial.println(i);
-  if(i > longest) longest = i;
-  
-  i = testLine(nextCounter, 7);
-  Serial.print("\ttop-right/bottom-left line length : ");
-  Serial.println(i);
-  if(i > longest) longest = i;
-  
-  i = testLine(nextCounter, 9);
-  Serial.print("\ttop-left/bottom-right line length : ");
-  Serial.println(i);
-  if(i > longest) longest = i;
+  thisLen = testLine(pos, 8, 0, myCounter); //Straight up and down               |
+  if(thisLen > maxLen) maxLen = thisLen;
 
-  return longest;
+  thisLen = testLine(pos, 7, 1, myCounter); //Diagonal, top-right to bottom-left /
+  if(thisLen > maxLen) maxLen = thisLen;
+
+  thisLen = testLine(pos, 1, 1, myCounter); //Horizontal                         —
+  if(thisLen > maxLen) maxLen = thisLen;                              
+
+  return maxLen;
 }
 
-uint8_t Connect4ComputerPlayer::testLine(uint32_t lastPosition, uint32_t increment)
+uint8_t Connect4ComputerPlayer::testLine(uint8_t startPos, int8_t offset, int8_t expectedColumnChange, uint8_t myCounter)
 {
-  uint32_t i = 0; //i is the number of counters in a row.
-  uint32_t nextPos = lastPosition;
-  
+  uint8_t counter = 1;
+  int8_t newPos = startPos;
+  uint8_t lineLen = 0;
+  boolean valid  = true;
+  uint8_t winningPieceIndex = 0;
+  //First test the negative line, i.e. subtract the offset and expect a negative column change
+  while(valid)
+  {
+    int8_t oldCol = newPos % 8;
+    newPos -= offset;
+    int8_t newCol = newPos % 8;
+
+    //Debug position
+    //Serial.print("Testing for counter at ");Serial.print(newPos);Serial.print(" Exp:");Serial.print(counterColour);Serial.print(" Act:");Serial.print(board[newPos]);
+    //Serial.print(" Exp col:"); Serial.print(expectedColumnChange); Serial.print(" Act col:"); Serial.print(abs(oldCol-newCol));
     
-  //Serial.print("Testing for a line using increment ");
-  //Serial.println(increment);
+    if(newPos < 0) valid = false; 
+    if(valid && board[newPos] != myCounter) valid = false;
+    if(valid && (abs(oldCol - newCol) != expectedColumnChange)) valid = false;
+    if(valid) counter++;
 
-  //Serial.println("Checking to the left");
-  //check to see if we've hit the left edge
-  nextPos -= increment;
-  while(nextPos > 15) //ignore the top two rows
-  {
-    int col = nextPos % 8;
-    //Serial.print("Current colour ");Serial.println(counterColour);
-    //Serial.print("Board value ");Serial.println(board[nextPos]);
-    if(board[nextPos] == counterColour)
-    {
-      //found a matching piece
-      //Serial.print("Found a match at position ");
-      //Serial.println(nextPos);
-      nextPos -= increment;
-      i++;
-    } 
-    else
-    {
-      //Serial.println("Not a match, stopping search to left");
-      break;
-    }
-    //Check for the left hand edge
-    if(nextPos % 8 > col) //Now we've incremented, see if our column has increased (ie. we've wrapped on to the right)
-    {
-      //We've wrapped on the right hand side, quit
-      //Serial.println("Left edge, continue search on right");
-      break;  
-    }
+    //if(valid) Serial.println(" VALID");
+    //else      Serial.println(" INVALID");
   }
-
-  //Serial.println("Checking positions to the right");
-  //Now check to see if there are any more pieces to the right
-  nextPos = lastPosition + increment;
-  while(nextPos < 64)
+  newPos = startPos;
+  valid = true;
+  //then test the positive line, adding the offset and expecting a positive column change
+  while(valid)
   {
-    int col = nextPos % 8;
-    //Serial.print("Checking position ");
-    //Serial.println(nextPos);
-    //Serial.print("Current colour ");
-    //Serial.println(counterColour);
-    if(board[nextPos] == counterColour)
-    {
-      //found a matching piece
-      //Serial.print("Found a match at position ");
-      //Serial.println(nextPos);
-      nextPos += increment;
-      i++;
-    } 
-    else
-    {
-      //Serial.println("Not a match, stopping search to right");
-      break;
-    } 
+    int8_t oldCol = newPos % 8;
+    newPos += offset;
+    int8_t newCol = newPos % 8;
 
-    //Check for the left hand edge, unless were testing vertically
-    if(nextPos % 8 < col) //Now we've incremented, see if our column has increased (ie. we've wrapped on to the left)
-    {
-      //We've wrapped on the right hand side, quit
-      //Serial.println("Right edge, aborting");
-      break;  
-    }
-  }
+    //Debug position
+    //Serial.print("Testing for counter at ");Serial.print(newPos);Serial.print(" Exp:");Serial.print(counterColour);Serial.print(" Act:");Serial.print(board[newPos]);
+    //Serial.print(" Exp col:"); Serial.print(expectedColumnChange); Serial.print(" Act col:"); Serial.print(abs(oldCol-newCol));
+    
+    if(newPos > 64) valid = false; 
+    if(valid && board[newPos] != myCounter) valid = false;
+    if(valid && (abs(oldCol - newCol) != expectedColumnChange)) valid = false;
+    if(valid) counter++;
 
-  return i;
+    //if(valid) Serial.println(" VALID");
+    //else      Serial.println(" INVALID");
+  } 
+
+  return counter;
 }

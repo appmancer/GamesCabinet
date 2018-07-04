@@ -4,6 +4,7 @@
 
 OnXComputerPlayer::OnXComputerPlayer()
 {
+  reset();
 }
 
 OnXComputerPlayer::~OnXComputerPlayer()

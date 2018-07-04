@@ -91,6 +91,8 @@ class OnX : public GameBase
     
     void drawBoard();
 
+    const char* mGameName = "Noughts and Crosses";
+
   public:
     OnX(Cabinet* cab);
     ~OnX();

@@ -273,7 +273,7 @@ void PixelEffects::fade()
  */
 void PixelEffects::fade(uint32_t final[64])
 {
-  savedBrightness = getBrightness();
+  savedBrightness = PIXELEFFECT_DEFAULT_BRIGHTNESS;
   //Copy the array
   for(int i=0; i<64;i++)
   {

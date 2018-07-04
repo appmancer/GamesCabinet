@@ -3,7 +3,7 @@
 //#include "MazeRaceComputerPlayerLeftWall.h"
 #include "MazeRaceComputerPlayerRandomMouse.h"
 
-MazeRace::MazeRace(Cabinet* cab) : GameBase(cab, "Maze Race")
+MazeRace::MazeRace(Cabinet* cab) : GameBase(cab)
 {
   Serial.println(F("Starting Maze Race"));
   player1 = NULL;
@@ -24,12 +24,6 @@ void MazeRace::reset()
   uint16_t textCol = mCabinet->p1SFX.Color(255, 255, 0);
   mCabinet->p1SFX.setTextColor(textCol);
   mCabinet->p2SFX.setTextColor(textCol);
-
-  mCabinet->p1TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p1TopLight.show();
- 
-  mCabinet->p2TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p2TopLight.show();
 
   if(player1 != NULL)
   {
@@ -92,10 +86,11 @@ void MazeRace::gameloop()
 
 void MazeRace::startDemo()
 {
-  mDemoMode = true;
+  mDemoMode = true;  
+  reset();  
   player1 = new MazeRaceComputerPlayerRandomMouse(MAZE_DEFAULT_WIDTH, MAZE_DEFAULT_HEIGHT);
   player2 = new MazeRaceComputerPlayerRandomMouse(MAZE_DEFAULT_WIDTH, MAZE_DEFAULT_HEIGHT);  
-  
+
   //Set the initial positions
   player1->setPosition(mEntrance);
   player2->setPosition(mEntrance);
@@ -109,12 +104,6 @@ void MazeRace::showPregame()
 {
   currentPhase = MAZE_PREGAME;
   //Scroll the game name
- 
-  mCabinet->p1TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p1TopLight.show();
- 
-  mCabinet->p2TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p2TopLight.show();
 
   mCabinet->p1SFX.scrollOnce(mGameName);
   mCabinet->p2SFX.scrollOnce(mGameName);
@@ -246,9 +235,10 @@ void MazeRace::updateIngame()
 
 void MazeRace::updateEnded()
 {
-  if(mDemoMode && readyTime < millis())
+  if(mDemoMode && (readyTime < millis()))
   {
-    asm volatile ("  jmp 0");    
+    //Reset the chip
+    digitalWrite(RESET_PIN, HIGH);
   }
 
   //Wait for a button press

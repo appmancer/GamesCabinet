@@ -319,9 +319,7 @@ bool BattleshipsHumanPlayer::isValidPosition(uint8_t initialPos, uint8_t* board)
 void BattleshipsHumanPlayer::hit()
 {
   remainingShips--; 
-  Serial.print("You have ");
-  Serial.print(remainingShips);
-  Serial.println(" cells remaining");
+  //Serial.print("You have ");Serial.print(remainingShips);Serial.println(" cells remaining");
 }
 
 bool BattleshipsHumanPlayer::isDestroyed()
@@ -331,7 +329,7 @@ bool BattleshipsHumanPlayer::isDestroyed()
 
 void BattleshipsHumanPlayer::debugPositions()
 {
-  Serial.println("Ship placed positions");
+  /*Serial.println("Ship placed positions");
   for(int i =0; i <6; i++)
   {
     Serial.print("Ship ");
@@ -342,5 +340,5 @@ void BattleshipsHumanPlayer::debugPositions()
     Serial.print(" pixel 0x");
     if(pos < 0x10) Serial.print("0");
     Serial.println(pos, HEX);
-  }  
+  } */ 
 }

@@ -18,17 +18,14 @@
  class GameBase
  {
   public:
-    GameBase(Cabinet* cab, const char* name);
+    GameBase(Cabinet* cab);
     ~GameBase() {}
-    const char* id();
     virtual void gameloop() = 0;
     virtual void startDemo() = 0;
-
+    
   protected:
     Cabinet* mCabinet;
-    const char* mGameName;
     bool mDemoMode;
-
     void printMessage(LiquidCrystal_I2C* lcd, const __FlashStringHelper* line, const __FlashStringHelper* line2, uint8_t h1, uint8_t h2);   
  };
 

@@ -29,6 +29,7 @@ class MazeRace : public GameBase
     MazeRacePlayer* player2;
 
     char* mMaze;
+    const char* mGameName = "Maze Race";
     uint16_t mEntrance;
     uint16_t mExit;
     bool mPlayer1Finished;
