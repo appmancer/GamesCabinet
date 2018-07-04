@@ -27,16 +27,21 @@ void MazeGenerator::generate(char* maze, uint8_t width, uint8_t height)
 
   //Pick a start point on the top of the maze
   randomSeed(analogRead(0));
+  Serial.println("Choosing start");
   uint16_t start = random(width - 4) + 2;
   start |= 0x01; //Ensure that the start position is odd
   //Knock out the start block
   maze[start] = ' ';
   start += mWidth;
   maze[start] = ' ';
+
+  Serial.print("Starting in column :");Serial.println(start);
   
   //Generate a path in the maze
   removeBlock(maze, start);
 
+  debugMaze(maze);
+  Serial.println("Choosing an exit");
   //Pick an endpoint
   uint16_t exitPoint = 0;
   while(exitPoint == 0)
@@ -46,6 +51,7 @@ void MazeGenerator::generate(char* maze, uint8_t width, uint8_t height)
     {
       //Knock out exit
       maze[exitPoint] = ' ';
+      Serial.print("Exit in column ");Serial.println(exitPoint % 8);
     }
     else
     {
@@ -53,7 +59,6 @@ void MazeGenerator::generate(char* maze, uint8_t width, uint8_t height)
       exitPoint = 0;  
     }
   }
-  Serial.println();
   debugMaze(maze);
 }
 

@@ -8,7 +8,7 @@
 #include "Connect4ComputerPlayer.h"
 #include "Connect4HumanPlayer.h"
 
-Connect4::Connect4(Cabinet* cab) : GameBase (cab, "Connect 4")
+Connect4::Connect4(Cabinet* cab) : GameBase (cab)
 {
   Serial.println(F("Starting Connect4"));
   player1 = NULL;
@@ -24,12 +24,6 @@ void Connect4::reset()
   uint16_t textCol = mCabinet->p1SFX.Color(255, 0, 0);
   mCabinet->p1SFX.setTextColor(textCol);
   mCabinet->p2SFX.setTextColor(textCol);
-
-  mCabinet->p1TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p1TopLight.show();
- 
-  mCabinet->p2TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p2TopLight.show();
 
   //Reset the setup states
   
@@ -83,7 +77,7 @@ void Connect4::gameloop()
          startMove();
          break;
       case CONNECT4_NONE:
-        Serial.println("No status flag is set, starting pregame");
+        //Serial.println("No status flag is set, starting pregame");
         showPregame();
         break;
     }
@@ -93,7 +87,9 @@ void Connect4::startDemo()
 {
   mDemoMode = true;
   player1 = new Connect4ComputerPlayer();
+  player1->setBoard(&board[0], PLAYER_1_COUNTER);
   player2 = new Connect4ComputerPlayer();
+  player2->setBoard(&board[0], PLAYER_2_COUNTER);
 
   //Set the screens to all sea green
   mCabinet->p1SFX.fillScreen(BLACK);
@@ -112,15 +108,10 @@ void Connect4::showPregame()
 {
   currentPhase = CONNECT4_PREGAME;
   //Scroll the game name
- 
-  mCabinet->p1TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p1TopLight.show();
- 
-  mCabinet->p2TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p2TopLight.show();
 
-  mCabinet->p1SFX.scrollOnce(mGameName);
-  mCabinet->p2SFX.scrollOnce(mGameName);
+  static const char* gameName = "Connect 4";
+  mCabinet->p1SFX.scrollOnce(gameName);
+  mCabinet->p2SFX.scrollOnce(gameName);
 }
 
 void Connect4::updatePregame()
@@ -213,43 +204,19 @@ void Connect4::startMove()
     currentPlayer = player2;  
     playerColour = RED;
     counterColour = PLAYER_2_COUNTER;
-    
-    mCabinet->p1TopLight.setPixelColor(0, BLACK);
-    mCabinet->p1TopLight.show();
-    mCabinet->p2TopLight.setPixelColor(0, GREEN);
-    mCabinet->p2TopLight.show();
     defendingLCD = &(mCabinet->p1Display);
-    attackingLCD = &(mCabinet->p2Display); 
-    winnerLight = &(mCabinet->p2TopLight);
+    attackingLCD = &(mCabinet->p2Display);
   }
   else
   {
     currentPlayer = player1;  
     playerColour = YELLOW;
     counterColour = PLAYER_1_COUNTER;
-    
-    mCabinet->p1TopLight.setPixelColor(0, GREEN);
-    mCabinet->p1TopLight.show();
-    mCabinet->p2TopLight.setPixelColor(0, BLACK);
-    mCabinet->p2TopLight.show();
     defendingLCD = &(mCabinet->p2Display);
     attackingLCD = &(mCabinet->p1Display);
-    winnerLight = &(mCabinet->p1TopLight);
   }
   
   currentPlayer->getState()->buttonState = 0;
-/*
-  mCabinet->p1SFX.larsenWipe(DARKGREEN);
-  mCabinet->p2SFX.larsenWipe(DARKGREEN);
-
-  while(!mCabinet->p1SFX.updateSFX())
-  {
-    mCabinet->p2SFX.updateSFX();
-  }
-
-  //We have to do one more update to complete the defending matrix
-  mCabinet->p1SFX.updateSFX();
-  */
   printMessage(attackingLCD, F("Your move"), F(""), 2, 3);
   printMessage(defendingLCD, F("Please wait"), F(""), 1, 4);
 
@@ -370,27 +337,28 @@ bool Connect4::playerWon(uint8_t testBoard[], uint32_t lastPosition)
   //First test, horizontal
   int i = 0;
 
-  if(testLine(testBoard, lastPosition, 1))
+  if(testLine(lastPosition, 1, 1) >= 4)
   {
     hasWon = true;
-    Serial.println("Horizontal Line is winner");  
+    Serial.println(F("Horizontal Line is winner"));  
   }
-  else if(testLine(testBoard, lastPosition, 8))
+  else if(testLine(lastPosition, 8, 0) >= 4)
   {
     hasWon = true;
-    Serial.println("Vertical Line is winner");  
+    Serial.println(F("Vertical Line is winner"));  
   }
-  else if(testLine(testBoard, lastPosition, 7))
+  else if(testLine(lastPosition, 7, 1) >= 4)
   {
     hasWon = true;
-    Serial.println("Diagnonal top right/bottom left is winner");  
+    Serial.println(F("Diagnonal top right/bottom left is winner"));  
   }
-  else if(testLine(testBoard, lastPosition, 9))
+  else if(testLine(lastPosition, 9, 1) >= 4)
   {
     hasWon = true;
-    Serial.println("Diagnonal top left/bottom right is winner");  
+    Serial.println(F("Diagnonal top left/bottom right is winner"));  
   }
   
+  readyTime = millis() + 1000;
   return hasWon;
 }
 
@@ -412,7 +380,9 @@ void Connect4::updateWinner()
 
   if(mDemoMode)
   {
-    asm volatile ("  jmp 0");  
+    //Reset the chip
+    Serial.println(F("Connect 4 resetting"));
+    digitalWrite(RESET_PIN, HIGH);  
   }
 
   flashOn = !flashOn;
@@ -421,8 +391,7 @@ void Connect4::updateWinner()
   {
     if(winningPieces[i] >= 0)
     {
-      //Serial.print("Winning square : ");
-      //Serial.println(winningPieces[i]);
+      //Serial.print("Winning square : ");Serial.println(winningPieces[i]);
       mCabinet->p1SFX.setPixelColor(winningPieces[i], flashColour);
       mCabinet->p2SFX.setPixelColor(winningPieces[i], flashColour);    
       winnerLight->setPixelColor(0, flashColour);  
@@ -443,11 +412,8 @@ void Connect4::updateWinner()
   }
 }
 
-bool Connect4::testLine(uint8_t testBoard[], uint32_t lastPosition, uint32_t increment)
+uint8_t Connect4::testLine(uint8_t startPos, int8_t offset, int8_t expectedColumnChange)
 {
-  uint32_t i = 0; //i is the number of counters in a row.
-  bool hasWon = false;
-  uint32_t nextPos = lastPosition;
   //This is an array containing the positions of the pieces in the winning combination.
   //This could be up to 7 pieces, if the piece just dropped in is a new piece
   //Often this will only be 4 pieces, so a value of 255 (&FF) fills in unneeded spaces
@@ -456,98 +422,41 @@ bool Connect4::testLine(uint8_t testBoard[], uint32_t lastPosition, uint32_t inc
     winningPieces[c] = 0xFF;  
   }
 
-  //Serial.print("Testing for a line using increment ");
-  //Serial.println(increment);
-
-  //Serial.println("Checking to the left");
-  //check to see if we've hit the left edge
-  while(nextPos > 15) //ignore the top two rows
+  int8_t newPos = startPos;
+  uint8_t lineLen = 0;
+  boolean valid  = true;
+  uint8_t winningPieceIndex = 0;
+  //First test the negative line, i.e. subtract the offset and expect a negative column change
+  while(valid)
   {
-    int col = nextPos % 8;
-    //Serial.print("Checking position ");
-    //Serial.println(nextPos);
-    //Serial.print("Current colour ");
-    //Serial.println(counterColour);
-    //Serial.print("Board pos ");
-    //Serial.println(testBoard[nextPos]);
-    if(testBoard[nextPos] == counterColour)
-    {
-      //found a matching piece
-      //Serial.print("Found a match at position ");
-      //Serial.println(nextPos);
-      winningPieces[i++] = nextPos;
-      nextPos -= increment;
-      //Check for the left hand edge
-      if(increment == 1 && (nextPos % 8) > col) //Now we've incremented, see if our column has increased (ie. we've wrapped on to the right)
-      {
-        //We've wrapped on the right hand side, quit
-        //Serial.println("Left edge, continue search on right");
-        break;  
-      }
-    } 
-    else
-    {
-      //Serial.println("Not a match, stopping search to left");
-      break;
-    }
+    int8_t oldCol = newPos % 8;
+    newPos -= newPos;
+    int8_t newCol = newPos % 8;
+    if(newPos < 0) valid = false; 
+    if(valid && board[newPos] != counterColour) valid = false;
+    if(valid && (abs((oldCol - newCol) != expectedColumnChange))) valid = false;
+
+    if(valid) winningPieces[winningPieceIndex++] = newPos;
   }
 
-  //Serial.println("Checking positions to the right");
-  //Now check to see if there are any more pieces to the right
-  nextPos = lastPosition + increment;
-
-  //Check that we've not just jumped onto the next line
-  if((nextPos % 8) > (lastPosition % 8))
+  //Add the newly dropped piece
+  winningPieces[winningPieceIndex++] = startPos;  
+  newPos = startPos;
+  valid = true;
+  //then test the positive line, adding the offset and expecting a positive column change
+  while(valid)
   {
-    while(nextPos < BOARDSIZE)
-    {
-      int col = nextPos % 8;
-      //Serial.print("Checking position ");
-      //Serial.println(nextPos);
-      //Serial.print("Current colour ");
-      //Serial.println(counterColour);
-      //Serial.print("Board pos ");
-      //Serial.println(testBoard[nextPos]);
-      if(testBoard[nextPos] == counterColour)
-      {
-        //found a matching piece
-        //Serial.print("Found a match at position ");
-        //Serial.println(nextPos);
-        winningPieces[i++] = nextPos;
-        nextPos += increment;
-        //Check for the left hand edge, unless were testing vertically
-        if(increment == 1 && (nextPos % 8) < col) //Now we've incremented, see if our column has increased (ie. we've wrapped on to the left)
-        {
-          //We've wrapped on the right hand side, quit
-          //Serial.println("Right edge, aborting");
-          break;  
-        }
-      } 
-      else
-      {
-        //Serial.println("Not a match, stopping search to right");
-        break;
-      } 
-    }
-  }
+    int8_t oldCol = newPos % 8;
+    newPos += offset;
+    int8_t newCol = newPos % 8;
+    if(newPos > BOARDSIZE) valid = false; 
+    if(valid && board[newPos] != counterColour) valid = false;
+    if(valid && (abs(oldCol - newCol) != expectedColumnChange)) valid = false;
 
-  //Serial.print("Found a sequence of ");
-  //Serial.println(i);
-  
-  if(i > 3)
-  {
-    //Serial.println("Found a line");  
-    hasWon = true;
-  
-    //Serial.println("Willing line:");
-    //for(int k=0; k<i; k++)
-    //{
-    //  Serial.print(winningPieces[k]);Serial.print(", ");  
-    //}
-    //Serial.println("");
-  }
+    if(valid) winningPieces[winningPieceIndex++] = newPos;
+  } 
 
-  return hasWon;
+  return winningPieceIndex;
 }
 
 void Connect4::debugBoard()

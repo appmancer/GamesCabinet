@@ -1,16 +1,10 @@
 #include "GameBase.h"
 
-GameBase::GameBase(Cabinet* cab, const char* name) : mGameName(name)
+GameBase::GameBase(Cabinet* cab)
 {
   mCabinet = cab;  
   mDemoMode = false;
 }
-
-const char* GameBase::id()
-{
-  return mGameName;
-}
-
 
 void GameBase::printMessage(LiquidCrystal_I2C* lcd, const __FlashStringHelper* line, const __FlashStringHelper* line2, uint8_t h1, uint8_t h2)
 {
@@ -20,5 +14,6 @@ void GameBase::printMessage(LiquidCrystal_I2C* lcd, const __FlashStringHelper* l
     lcd->setCursor(h2, 1);
     lcd->print(line2);     
 }
+
 
 

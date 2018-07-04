@@ -34,6 +34,9 @@ const uint16_t colors[] = {
   PixelEffects::Color(255, 0, 0), PixelEffects::Color(0, 255, 0), PixelEffects::Color(0, 0, 255), PixelEffects::Color(0, 0, 0) };
 
 void setup() {
+  pinMode(RESET_PIN, OUTPUT);
+  digitalWrite(RESET_PIN, LOW);
+  
   Serial.begin(115200);
   Serial.println(F("Starting Sammy's Game Cabinet"));
 
@@ -41,34 +44,24 @@ void setup() {
   
   cab->p1SFX.begin();
   cab->p1SFX.setTextWrap(false);
-  cab->p1SFX.setBrightness(30);
+  cab->p1SFX.setBrightness(50);
   cab->p1SFX.setTextColor(colors[0]);
   cab->p1SFX.fillScreen(colors[3]);
   cab->p1SFX.show();
 
   cab->p2SFX.begin();
   cab->p2SFX.setTextWrap(false);
-  cab->p2SFX.setBrightness(30);
+  cab->p2SFX.setBrightness(50);
   cab->p2SFX.setTextColor(colors[0]);
   cab->p2SFX.fillScreen(colors[3]);
   cab->p2SFX.show();
-
-  cab->p1TopLight.begin();
-  cab->p1TopLight.setBrightness(30);
-  cab->p1TopLight.setPixelColor(0, PURPLE);
-  cab->p1TopLight.show();
-
-  cab->p2TopLight.begin();
-  cab->p2TopLight.setBrightness(30);
-  cab->p2TopLight.setPixelColor(0, PURPLE);
-  cab->p2TopLight.show();
 
   cab->p1Display.begin(16, 2);
   cab->p2Display.begin(16, 2);
 
   randomSeed(analogRead(0));
 
-  Serial.println("Playing the sound effects");
+  //Serial.println(("Playing the sound effects");
   //Init the audio player
   Serial3.begin(9600);
   cab->audioController.init();

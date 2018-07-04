@@ -41,8 +41,10 @@
 
 const int8_t          searchOrder[8] = {NORTH, NORTHEAST, EAST, SOUTHEAST, SOUTH, SOUTHWEST, WEST, NORTHWEST};
 const int8_t          rowOffsets[8]  = {-1,   -1,         0,    1,         1,     1,         0,   -1};
+const int8_t          weighting[16]  = {10, -2, 8, 8, -2, -2, 0, 0, 8, 0, 3, 3, 8, 0, 3, 5};
 
   //Alternate starting positions for testing
+  /*
 const int8_t  closeToEnd[64] = {4, 2, 2, 4, 4, 2, 2, 4,
                                 2, 2, 2, 2, 2, 2, 2, 2,
                                 2, 2, 2, 2, 2, 2, 2, 2,
@@ -69,7 +71,7 @@ const int8_t  stuckCorner[64] =   {2, 0, 0, 0, 0, 0, 0, 4,
                                    0, 4, 4, 4, 2, 2, 0, 0,
                                    0, 0, 0, 4, 0, 2, 4, 0,
                                    0, 0, 0, 0, 0, 0, 0, 4};
-
+*/
 class Reversi : public GameBase
 {
   private:
@@ -99,6 +101,7 @@ class Reversi : public GameBase
     uint8_t           nextFlippedCounter;
     uint8_t           validMoves[BOARDSIZE];
     bool              flash;
+    bool              noValidMove;
     
     void showPregame();
     void updatePregame();
@@ -121,6 +124,7 @@ class Reversi : public GameBase
 
     void copyArray(uint8_t* source, uint8_t* target);
 
+    const char* mGameName = "Reversi";
   public:
     Reversi(Cabinet* cab);
     ~Reversi();

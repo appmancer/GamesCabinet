@@ -8,7 +8,7 @@
 #include "ReversiComputerPlayer.h"
 #include "ReversiHumanPlayer.h"
 
-Reversi::Reversi(Cabinet* cab) : GameBase (cab, "Reversi")
+Reversi::Reversi(Cabinet* cab) : GameBase (cab)
 {
   Serial.println(F("Starting Reversi"));
   player1 = NULL;
@@ -39,12 +39,6 @@ void Reversi::reset()
   mCabinet->p1SFX.setTextColor(textCol);
   mCabinet->p2SFX.setTextColor(textCol);
 
-  mCabinet->p1TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p1TopLight.show();
- 
-  mCabinet->p2TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p2TopLight.show();
-
   //Reset the setup states
   
   if(player1 != NULL)
@@ -63,6 +57,7 @@ void Reversi::reset()
   currentPhase = REVERSI_NONE;
   moveCounter = 0;
   nextFlippedCounter = 0;
+  noValidMove = false;
     
   //Reset the board
   for(int i=0; i<BOARDSIZE; i++)
@@ -79,10 +74,6 @@ void Reversi::reset()
   board[36] = PLAYER_1_COUNTER;
 
   moveCounter = 4; //We've already made the first four moves!
-
- // TODO:: Del me
- // copyArray(stuckCorner, board);
- // moveCounter = 61;
   
   drawBoard();
   Serial.println(F("Reversi reset and ready"));
@@ -132,13 +123,6 @@ void Reversi::showPregame()
 {
   currentPhase = REVERSI_PREGAME;
   //Scroll the game name
- 
-  mCabinet->p1TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p1TopLight.show();
- 
-  mCabinet->p2TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p2TopLight.show();
-
   mCabinet->p1SFX.scrollOnce(mGameName);
   mCabinet->p2SFX.scrollOnce(mGameName);
 }
@@ -218,7 +202,6 @@ void Reversi::updatePregame()
 
 void Reversi::drawBoard()
 {
- 
   for(uint8_t i = 0; i < BOARDSIZE; i++)
   {
     switch(board[i])
@@ -267,14 +250,8 @@ void Reversi::startMove()
     playerColour = player2Colour;
     counterColour = PLAYER_2_COUNTER;
     opponentColour = PLAYER_1_COUNTER;
-    
-    mCabinet->p1TopLight.setPixelColor(0, BLACK);
-    mCabinet->p1TopLight.show();
-    mCabinet->p2TopLight.setPixelColor(0, GREEN);
-    mCabinet->p2TopLight.show();
     defendingLCD = &(mCabinet->p1Display);
-    attackingLCD = &(mCabinet->p2Display); 
-    winnerLight = &(mCabinet->p2TopLight);
+    attackingLCD = &(mCabinet->p2Display);
   }
   else
   {
@@ -282,14 +259,8 @@ void Reversi::startMove()
     playerColour = player1Colour;
     counterColour = PLAYER_1_COUNTER;
     opponentColour = PLAYER_2_COUNTER;
-    
-    mCabinet->p1TopLight.setPixelColor(0, GREEN);
-    mCabinet->p1TopLight.show();
-    mCabinet->p2TopLight.setPixelColor(0, BLACK);
-    mCabinet->p2TopLight.show();
     defendingLCD = &(mCabinet->p2Display);
     attackingLCD = &(mCabinet->p1Display);
-    winnerLight = &(mCabinet->p1TopLight);
   }
   currentPlayer->getState()->buttonState = 0;
 
@@ -320,6 +291,14 @@ void Reversi::startMove()
   //Special case - if there are no valid moves, then the player forgoes his turn
   if(c == 0)
   {
+    if(noValidMove)
+    {
+      //Neither player can move, end the game
+        currentPhase = REVERSI_WINNER;  
+        return;
+    }
+    
+    noValidMove = true;
     Serial.println(F("No valid moves!"));
     debugBoard();
     
@@ -329,9 +308,10 @@ void Reversi::startMove()
     currentPhase = REVERSI_CHANGE_PLAYER;
     return;
   }
-  
-  printMessage(attackingLCD, F("Your move"), F(""), 2, 3);
-  printMessage(defendingLCD, F("Please wait"), F(""), 1, 4);
+
+  noValidMove = false;
+  printMessage(attackingLCD, F("Opponent's"), F("turn"), 3, 6);
+  printMessage(defendingLCD, F("Please wait"), F(""), 2, 4);
 
   drawCursor();
 
@@ -348,6 +328,7 @@ void Reversi::startMove()
       printMessage(defendingLCD, F("You have"), F("another go"), 4, 3);
       readyTime = millis() + 1000;
       currentPhase = REVERSI_CHANGE_PLAYER;
+      //TODO:  Detect when no player can move!
       return;
     }
     else
@@ -410,8 +391,8 @@ void Reversi::updateMainGame()
     else
     {
       mCabinet->audioController.playFileIndex(SFX_INVALID);
-      Serial.println("Button pressed but not valid position");
-      Serial.print("Cursor: "); Serial.print(cursorColour, HEX); Serial.print(" PlayerColour:");Serial.println(playerColour, HEX);
+      //Serial.println("Button pressed but not valid position");
+      //Serial.print("Cursor: "); Serial.print(cursorColour, HEX); Serial.print(" PlayerColour:");Serial.println(playerColour, HEX);
     }
   }
 }
@@ -669,33 +650,80 @@ uint8_t Reversi::bestMove(uint8_t myCounter)
   //Calculate the position with the highest number of flipped counters;
   int i =0;
   uint8_t kingOfTheHill = 0;
-  uint32_t highest = 0;
+  int32_t highest = 0;
   debugFlipList();
+  uint8_t choiceMoves[10];
+  for(int c=0; c<10; c++)choiceMoves[c] = 0xFF;
+  uint8_t choiceMovesIndex = 0;
   while(i < BOARDSIZE && validMoves[i] < 0xFF)
   {
-    uint32_t runningTotal = 0;
+    int32_t runningTotal = 0;
     for(int j = 0; j<8; j++)
     {
       runningTotal += testLine(validMoves[i], searchOrder[j], rowOffsets[j], myCounter);
     }
 
     //Serial.print("Pos ");Serial.print(validMoves[i]);Serial.print(" scores ");Serial.println(runningTotal);
-  
-    if(runningTotal > highest)
+    //Add some positional values as well.  These are the original weights
+    //10-02-08-08-08-08-02-10
+    //02-00-00-00-00-00-00-02
+    //08-00-03-03-03-03-00-08
+    //08-00-03-05-05-03-00-08
+    //08-00-03-05-05-03-00-08
+    //08-00-03-03-03-03-00-08
+    //02-00-00-00-00-00-00-02
+    //10-02-08-08-08-08-02-10
+    //These have 2 points of symmetry and can be reduced to 
+    //10-02-08-08
+    //02-00-00-00
+    //08-00-03-03
+    //08-00-03-05
+    
+    uint8_t col = validMoves[i] % 8;
+    uint8_t row = validMoves[i] / 8;
+    //Map the higher values onto the lower.  e.g col of 6 becomes 7-6 = 1
+    if(col > 3) col = 7 - col;
+    if(row > 3) row = 7 - row;
+    uint8_t weightIndex = (row * 4) + col;
+    Serial.print("Unweighted score:");Serial.print(runningTotal);
+    runningTotal += weighting[weightIndex]; 
+    Serial.print(" Weighted score:");Serial.println(runningTotal);
+
+    if(runningTotal == highest)
+    {
+      //We've got a second position that ties for first place
+      if(choiceMovesIndex < 10) //Max 10
+      {
+        choiceMoves[choiceMovesIndex++] = kingOfTheHill;  
+      }  
+    }
+    else if(runningTotal > highest)
     {
       highest = runningTotal;
       kingOfTheHill = validMoves[i];
       //Serial.print(kingOfTheHill); Serial.println(" is king of the hill");
+      //Reset the choiceMoves list
+      for(int c=0; c<10; c++)choiceMoves[c] = 0xFF;
+      choiceMovesIndex = 0;
+
+      choiceMoves[choiceMovesIndex++] = kingOfTheHill;
     }
 
     //Don't forget to increment i, only a complete loser idiot would forget that
     i++;
   }
 
+  
+
   if(highest == 0)
   {
     //No valid moves!  Return 0xFF to signify
     kingOfTheHill = 0xFF; 
+  }
+  else
+  {
+    //Choose a random good move
+    random(choiceMoves[choiceMovesIndex]);  
   }
 
   return  kingOfTheHill;
@@ -725,7 +753,7 @@ void Reversi::startWinner()
     }
   }
 
-  Serial.print("P1: ");Serial.print(p1Count);Serial.print(" P2: ");Serial.println(p2Count);
+  //Serial.print("P1: ");Serial.print(p1Count);Serial.print(" P2: ");Serial.println(p2Count);
   
   if(p1Count > p2Count)
   {
@@ -767,7 +795,14 @@ void Reversi::updateWinner()
 
   if(mDemoMode)
   {    
-    asm volatile ("  jmp 0");
+    //Reset the chip.  We have to blank the screen to get enough current to fire the transisitor!
+    mCabinet->p1SFX.fillScreen(boardColour);
+    mCabinet->p2SFX.fillScreen(boardColour);
+    mCabinet->p1SFX.show();
+    mCabinet->p2SFX.show();
+    
+    Serial.println(F("Reversi resetting device"));
+    digitalWrite(RESET_PIN, HIGH);
   }
 
   flash = !flash;
@@ -821,7 +856,7 @@ void Reversi::debugBoard()
 
 void Reversi::debugFlipList()
 {
-  Serial.println("Valid moves");
+  Serial.println(F("Valid moves"));
   for(int i=0; i<BOARDSIZE;i++)
   {
     Serial.print(validMoves[i]);Serial.print(" ");
@@ -835,7 +870,7 @@ void Reversi::debugFlipList()
     }
   }
   
-  Serial.print("Next Flippable: ");Serial.println(nextFlippedCounter);
+  Serial.print(F("Next Flippable: "));Serial.println(nextFlippedCounter);
   for(int i=0; i<BOARDSIZE;i++)
   {
     Serial.print(flippedCounters[i]);Serial.print(" ");

@@ -8,9 +8,9 @@
 #define LONGDELAY 300
 #define SHORTDELAY 50
 
-Battleships::Battleships(Cabinet* cab) : GameBase (cab, "Battleships")
+Battleships::Battleships(Cabinet* cab) : GameBase (cab)
 {
-  Serial.println("Starting Battleships");
+  Serial.println(F("Starting Battleships"));
   player1 = NULL;
   player2 = NULL;
   reset();
@@ -28,12 +28,6 @@ void Battleships::reset()
   uint16_t textCol = mCabinet->p1SFX.Color(255, 0, 0);
   mCabinet->p1SFX.setTextColor(textCol);
   mCabinet->p2SFX.setTextColor(textCol);
-
-  mCabinet->p1TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p1TopLight.show();
- 
-  mCabinet->p2TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p2TopLight.show();
 
   //Reset the setup states
   /*
@@ -150,15 +144,9 @@ void Battleships::showPregame()
 {
   currentPhase = BATTLESHIPS_PREGAME;
   //Scroll the game name
- 
-  mCabinet->p1TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p1TopLight.show();
- 
-  mCabinet->p2TopLight.setPixelColor(0, PURPLE);
-  mCabinet->p2TopLight.show();
-
-  mCabinet->p1SFX.scrollOnce(mGameName);
-  mCabinet->p2SFX.scrollOnce(mGameName);
+  static const char* gameName = "Battleships";
+  mCabinet->p1SFX.scrollOnce(gameName);
+  mCabinet->p2SFX.scrollOnce(gameName);
 }
 
 void Battleships::updatePregame()
@@ -425,10 +413,6 @@ void Battleships::startMove()
     defendingMatrix = &(mCabinet->p2SFX);
     attackingLCD = &(mCabinet->p1Display);
     defendingLCD = &(mCabinet->p2Display);
-    mCabinet->p1TopLight.setPixelColor(0, GREEN);
-    mCabinet->p1TopLight.show();
-    mCabinet->p2TopLight.setPixelColor(0, BLACK);
-    mCabinet->p2TopLight.show();
   }
   else
   {
@@ -438,10 +422,6 @@ void Battleships::startMove()
     defendingMatrix = &(mCabinet->p1SFX);
     attackingLCD = &(mCabinet->p2Display);
     defendingLCD = &(mCabinet->p1Display);
-    mCabinet->p1TopLight.setPixelColor(0, BLACK);
-    mCabinet->p1TopLight.show();
-    mCabinet->p2TopLight.setPixelColor(0, GREEN);
-    mCabinet->p2TopLight.show();
   }
 
   attackingPlayer->getState()->buttonState = 0;
@@ -744,8 +724,8 @@ void Battleships::updateWinner()
 
   if(mDemoMode && readyTime > millis())
   {
-    //Hacksville reset command
-    asm volatile ("  jmp 0");
+    //Reset the chip
+    digitalWrite(RESET_PIN, HIGH);
   }
 
   if(player1Buttons > 0 || player2Buttons > 0)
