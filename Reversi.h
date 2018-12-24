@@ -41,7 +41,10 @@
 
 const int8_t          searchOrder[8] = {NORTH, NORTHEAST, EAST, SOUTHEAST, SOUTH, SOUTHWEST, WEST, NORTHWEST};
 const int8_t          rowOffsets[8]  = {-1,   -1,         0,    1,         1,     1,         0,   -1};
-const int8_t          weighting[16]  = {10, -2, 8, 8, -2, -2, 0, 0, 8, 0, 3, 3, 8, 0, 3, 5};
+const int8_t          weighting[16]  = {10, -2, 8, 8, 
+                                        -2, -2, 0, 0, 
+                                         8,  0, 3, 3, 
+                                         8,  0, 3, 5};
 
   //Alternate starting positions for testing
   /*

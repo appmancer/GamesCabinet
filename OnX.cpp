@@ -243,7 +243,7 @@ void OnX::startMove()
   }
   currentPlayer->getState()->buttonState = 0;
   
-  printMessage(attackingLCD, F("Your move"), F(""), 2, 3);
+  printMessage(attackingLCD, F("Your move"), F(""), 3, 5);
   printMessage(defendingLCD, F("Please wait"), F(""), 2, 4);
 
   drawCursor();

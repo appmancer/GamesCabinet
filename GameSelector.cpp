@@ -121,7 +121,11 @@ void GameSelector::updateChooseGame()
     mIsDemo = true;
     //Choose a game at random  
     randomSeed(analogRead(0));
-    mDisplayGame = random(1, 6);
+    Serial.print(F("Choosing from "));Serial.print(MAX_INDEX);Serial.println(F(" games"));
+    mDisplayGame = random(1, MAX_INDEX);
+    mSelectedGame = mDisplayGame;
+    Serial.print(mDisplayGame); Serial.println(F(" has been chosen"));
+    //mDisplayGame = REVERSI_INDEX;
     strcpy_P(gameName, (char*)pgm_read_word(&(names_table[mDisplayGame - 1]))); // Necessary casts and dereferencing, just copy.
     mCabinet->p1SFX.scrollOnce(gameName);
     mCabinet->p2SFX.scrollOnce(gameName);  
@@ -157,6 +161,8 @@ void GameSelector::startName()
 {    
   //Reset the demo timer
   mDemoTime = millis() + DEMO_TIMEOUT;
+  mCabinet->p2SFX.setBrightness(50);
+  mCabinet->p2SFX.setBrightness(50);
   
   //Serial.print("Starting game scroll ID: "); Serial.println(mDisplayGame);
   mCabinet->p1Display.clear();
@@ -190,7 +196,7 @@ void GameSelector::startName()
       mCabinet->p1SFX.wipe(matrix);
       mCabinet->p2SFX.wipe(matrix);
       mCabinet->p1Display.setCursor(4, 1);
-      mCabinet->p2Display.setCursor(0, 1);
+      mCabinet->p2Display.setCursor(4, 1);
     break;  
     case REVERSI_INDEX:
       for(int i=0; i<64; i++) matrix[i] = pgm_read_dword_far(reversiBoard + i);

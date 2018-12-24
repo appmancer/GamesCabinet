@@ -35,6 +35,7 @@ Reversi::~Reversi()
 
 void Reversi::reset()
 {
+  randomSeed(analogRead(0));
   uint16_t textCol = mCabinet->p1SFX.Color(255, 0, 0);
   mCabinet->p1SFX.setTextColor(textCol);
   mCabinet->p2SFX.setTextColor(textCol);
@@ -111,6 +112,9 @@ void Reversi::startDemo()
   player1 = new ReversiComputerPlayer();
   player2 = new ReversiComputerPlayer();
 
+  player1->reset();
+  player2->reset();
+  
   drawBoard();
   //Start with player1
   currentPlayer = player1;
@@ -648,9 +652,10 @@ void Reversi::flipSingleLine(uint32_t startPosition, int8_t increment, uint32_t 
 uint8_t Reversi::bestMove(uint8_t myCounter)
 {
   //Calculate the position with the highest number of flipped counters;
-  int i =0;
+  int i = 0;
   uint8_t kingOfTheHill = 0;
-  int32_t highest = 0;
+  //its possible that the best score is -1, but it still needs to be recognised as a valid move
+  int32_t highest = -127;
   debugFlipList();
   uint8_t choiceMoves[10];
   for(int c=0; c<10; c++)choiceMoves[c] = 0xFF;
@@ -685,7 +690,7 @@ uint8_t Reversi::bestMove(uint8_t myCounter)
     if(col > 3) col = 7 - col;
     if(row > 3) row = 7 - row;
     uint8_t weightIndex = (row * 4) + col;
-    Serial.print("Unweighted score:");Serial.print(runningTotal);
+    Serial.print("Pos ");Serial.print(validMoves[i]);Serial.print(": Unweighted score:");Serial.print(runningTotal);
     runningTotal += weighting[weightIndex]; 
     Serial.print(" Weighted score:");Serial.println(runningTotal);
 
@@ -694,7 +699,7 @@ uint8_t Reversi::bestMove(uint8_t myCounter)
       //We've got a second position that ties for first place
       if(choiceMovesIndex < 10) //Max 10
       {
-        choiceMoves[choiceMovesIndex++] = kingOfTheHill;  
+        choiceMoves[choiceMovesIndex++] = validMoves[i];  
       }  
     }
     else if(runningTotal > highest)
@@ -713,9 +718,7 @@ uint8_t Reversi::bestMove(uint8_t myCounter)
     i++;
   }
 
-  
-
-  if(highest == 0)
+  if(choiceMovesIndex == 0)
   {
     //No valid moves!  Return 0xFF to signify
     kingOfTheHill = 0xFF; 
@@ -723,10 +726,16 @@ uint8_t Reversi::bestMove(uint8_t myCounter)
   else
   {
     //Choose a random good move
-    random(choiceMoves[choiceMovesIndex]);  
+    //Serial.println("Choosing a random good move from this list");
+    //for(int i=0;i<choiceMovesIndex;i++)
+    //  Serial.print(choiceMoves[i]);Serial.print(", ");
+    //Serial.print("Choosing random number between 1 and ");Serial.println(choiceMovesIndex);
+    uint8_t randomPick = random(choiceMovesIndex);
+    kingOfTheHill = choiceMoves[randomPick];  
+    Serial.print("Chose option ");Serial.print(randomPick);Serial.print(":");Serial.println(kingOfTheHill);
   }
 
-  return  kingOfTheHill;
+  return kingOfTheHill;
 }
 
 void Reversi::startWinner()

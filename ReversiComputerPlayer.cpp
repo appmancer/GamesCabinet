@@ -17,8 +17,7 @@ bool ReversiComputerPlayer::hasMoved()
   if(readyTime > millis())
     return false;
 
-  //Serial.print("Aiming for column ");
-  //Serial.println(selectedColumn);
+  //Serial.print("Current pos:");Serial.print(playerState.controlState);Serial.print(" Aiming for column ");Serial.println(selectedColumn);
   
   if(playerState.controlState < selectedColumn)
   {

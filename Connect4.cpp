@@ -217,8 +217,8 @@ void Connect4::startMove()
   }
   
   currentPlayer->getState()->buttonState = 0;
-  printMessage(attackingLCD, F("Your move"), F(""), 2, 3);
-  printMessage(defendingLCD, F("Please wait"), F(""), 1, 4);
+  printMessage(attackingLCD, F("Your move"), F(""), 3, 5);
+  printMessage(defendingLCD, F("Please wait"), F(""), 2, 4);
 
   drawCursor();
 
@@ -272,15 +272,15 @@ void Connect4::updateEffects()
   uint32_t rowLength = 8;
   //Test the next position
   //Serial.print("Testing new position ");Serial.println(dropRow + rowLength);
-  if(dropRow + rowLength >= BOARDSIZE)
-  {
+  //if(dropRow + rowLength >= BOARDSIZE)
+  //{
     //Serial.println("Reached the bottom of an empty column");  
-  }
-  else
-  {
+  //}
+  //else
+  //{
     //Serial.print("Next position colour ");
     //Serial.println(mCabinet->p1SFX.getPixelColor(dropRow + rowLength));
-  }
+  //}
   
   if(dropRow + rowLength >= BOARDSIZE || mCabinet->p1SFX.getPixelColor(dropRow + rowLength) > 0)
   {
@@ -413,7 +413,7 @@ void Connect4::updateWinner()
 }
 
 uint8_t Connect4::testLine(uint8_t startPos, int8_t offset, int8_t expectedColumnChange)
-{
+{ 
   //This is an array containing the positions of the pieces in the winning combination.
   //This could be up to 7 pieces, if the piece just dropped in is a new piece
   //Often this will only be 4 pieces, so a value of 255 (&FF) fills in unneeded spaces
@@ -430,11 +430,11 @@ uint8_t Connect4::testLine(uint8_t startPos, int8_t offset, int8_t expectedColum
   while(valid)
   {
     int8_t oldCol = newPos % 8;
-    newPos -= newPos;
+    newPos -= offset;
     int8_t newCol = newPos % 8;
     if(newPos < 0) valid = false; 
     if(valid && board[newPos] != counterColour) valid = false;
-    if(valid && (abs((oldCol - newCol) != expectedColumnChange))) valid = false;
+    if(valid && (abs(oldCol - newCol) != expectedColumnChange)) valid = false;
 
     if(valid) winningPieces[winningPieceIndex++] = newPos;
   }
@@ -452,10 +452,9 @@ uint8_t Connect4::testLine(uint8_t startPos, int8_t offset, int8_t expectedColum
     if(newPos > BOARDSIZE) valid = false; 
     if(valid && board[newPos] != counterColour) valid = false;
     if(valid && (abs(oldCol - newCol) != expectedColumnChange)) valid = false;
-
+    
     if(valid) winningPieces[winningPieceIndex++] = newPos;
-  } 
-
+  }
   return winningPieceIndex;
 }
 

@@ -14,7 +14,7 @@
  * We're going to use 24bit, there is no point working in 16bit unless we need to (scroll text).  Colours are 24bit RGB values stored in uint32_t (the MSB is not used)
  */
 
-PixelEffects::PixelEffects(uint8_t width, uint8_t height, uint8_t pin) : Adafruit_NeoMatrix(width, height, pin)
+PixelEffects::PixelEffects(uint8_t width, uint8_t height, uint8_t pin): Adafruit_NeoMatrix(width, height, pin/*, NEO_MATRIX_TOP + NEO_MATRIX_LEFT + NEO_MATRIX_ROWS*/)
 {
   currentEffect = PIXELEFFECT_NONE;
 
@@ -42,6 +42,7 @@ PixelEffects::PixelEffects(uint8_t width, uint8_t height, uint8_t pin) : Adafrui
      //Write the value form second into first
      dissolveOrder[first] = swap;
   }
+  Serial.println("Started matrix");
 }
 
 PixelEffects::~PixelEffects()

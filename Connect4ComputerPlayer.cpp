@@ -108,7 +108,7 @@ uint8_t Connect4ComputerPlayer::choosePosition()
         break;
     }
     
-    if(nextPos == col + 16)
+    if(nextPos == col + 8)
     {
       //this column is full
       //Serial.print("Column ");Serial.print(col);Serial.println(" is full.");
@@ -210,7 +210,7 @@ uint8_t Connect4ComputerPlayer::longestLine(uint8_t pos, uint8_t myCounter)
 {
   uint8_t maxLen = 0;
   uint8_t thisLen = 0;
-  Serial.print("Testing position ");Serial.println(pos);
+  //Serial.print("Testing position ");Serial.println(pos);
   thisLen = testLine(pos, 9, 1, myCounter); //Diagonal, top-left to bottom-right \
   if(thisLen > maxLen) maxLen = thisLen;
 

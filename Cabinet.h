@@ -31,7 +31,11 @@
 #define SFX_VALID    10
 #define SFX_WIN      11
 
-#define RESET_PIN     7
+#define RESET_PIN     10
+#define SHUTDOWN_PIN  8
+#define BUTTON_PIN_1  11
+#define BUTTON_PIN_2  12
+#define SLEEP_PIN     4
 
 
 const char battleshipsName[]  PROGMEM  = {"Battleships"};
@@ -49,10 +53,10 @@ typedef struct Cabinet
   //Player 1 encoders - Arduino Mega interrupt pins 2, 3, 18, 19, 20, 21.  20 & 21 are IIC pins
   // PlayerControl(uint8_t horizontalPinA, uint8_t horizontalPinB, uint8_t verticalPinA, uint8_t verticalPinB, uint8_t horizontalFire, uint8_t verticalFire, uint8_t firePin);
 
-  /* Legacy version
-  PlayerControl p1Control = PlayerControl(2, 34, 3, 30, 29, 31, 43);
-  PlayerControl p2Control = PlayerControl(19, 22, 18, 24, 23, 25, 42);
-  */
+  // Legacy version
+  //PlayerControl p1Control = PlayerControl(2, 34, 3, 30, 29, 31, 43);
+  //PlayerControl p2Control = PlayerControl(19, 22, 18, 24, 23, 25, 42);
+  
   /* Mega Sound and Power Board version */ 
   // OK, it turns out that you can't use the analogue pins on the back! Avoid 30-37 inclusive
   // Some (34, 36) don't work with quadrature encoders and neopixels as digital pins (some do annoyingly, like 30)
@@ -64,16 +68,26 @@ typedef struct Cabinet
   //LED matrices for us, like scrolling text
   
   // Legacy version
-  // PixelEffects p1SFX = PixelEffects(8, 8, 51);
-  // PixelEffects p2SFX = PixelEffects(8, 8, 50);
+  //PixelEffects p1SFX = PixelEffects(8, 8, 51);
+  //PixelEffects p2SFX = PixelEffects(8, 8, 50);
 
   /*  Mega Sound and Power Board version, p1SFX moves to pin 52 */
   PixelEffects p1SFX = PixelEffects(8, 8, 52); 
   PixelEffects p2SFX = PixelEffects(8, 8, 26); 
-   
+
+  
   //Secondary displays
+  //Connie & Hannah
   LiquidCrystal_I2C p1Display = LiquidCrystal_I2C(0x3F, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
-  LiquidCrystal_I2C p2Display = LiquidCrystal_I2C(0x3E, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+  LiquidCrystal_I2C p2Display = LiquidCrystal_I2C(0x26, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+  
+  //Harriet
+  //LiquidCrystal_I2C p1Display = LiquidCrystal_I2C(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+  //LiquidCrystal_I2C p2Display = LiquidCrystal_I2C(0x26, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+
+  //Jenny
+  //LiquidCrystal_I2C p1Display = LiquidCrystal_I2C(0x26, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+  //LiquidCrystal_I2C p2Display = LiquidCrystal_I2C(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
   
   BY8X0116P audioController = BY8X0116P(Serial3);
 };
